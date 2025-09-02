@@ -1,0 +1,2904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TypeRush - Modern Typing Game</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Devanagari:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Tamil:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Telugu:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gujarati:wght@300;400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+Gurmukhi:wght@300;400;500;600;700&display=swap');
+        
+        * {
+            font-family: 'Inter', sans-serif;
+        }
+        
+        .lang-hindi { font-family: 'Noto Sans Devanagari', sans-serif; }
+        .lang-tamil { font-family: 'Noto Sans Tamil', sans-serif; }
+        .lang-telugu { font-family: 'Noto Sans Telugu', sans-serif; }
+        .lang-bengali { font-family: 'Noto Sans Bengali', sans-serif; }
+        .lang-gujarati { font-family: 'Noto Sans Gujarati', sans-serif; }
+        .lang-punjabi { font-family: 'Noto Sans Gurmukhi', sans-serif; }
+        
+        .glow {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.5);
+        }
+        
+        .correct {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+        }
+        
+        .incorrect {
+            background: rgba(239, 68, 68, 0.2);
+            color: #ef4444;
+        }
+        
+        .current {
+            background: rgba(59, 130, 246, 0.3);
+            animation: pulse 1s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+            40% { transform: translateY(-10px); }
+            60% { transform: translateY(-5px); }
+        }
+        
+        .slide-in {
+            animation: slideIn 0.3s ease-out;
+        }
+        
+        .bounce {
+            animation: bounce 0.6s;
+        }
+        
+        .rising-word {
+            position: absolute;
+            animation: rise linear;
+            font-weight: 700;
+            padding: 12px 24px;
+            border-radius: 12px;
+            backdrop-filter: blur(10px);
+            bottom: 0;
+            font-size: 2rem;
+            text-shadow: 0 0 15px currentColor;
+            min-width: 120px;
+            text-align: center;
+            letter-spacing: 1px;
+        }
+        
+        @keyframes rise {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(-450px); opacity: 1; }
+        }
+        
+        .keyboard-key {
+            transition: all 0.15s ease;
+            cursor: pointer;
+            min-width: 32px;
+            min-height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+        }
+        
+        @media (min-width: 768px) {
+            .keyboard-key {
+                min-width: 40px;
+                min-height: 40px;
+                font-size: 16px;
+            }
+        }
+        
+        .keyboard-key.pressed {
+            transform: scale(0.9);
+            background: rgba(59, 130, 246, 0.6) !important;
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.8);
+            border-color: rgba(59, 130, 246, 0.8);
+            color: white;
+        }
+        
+        .keyboard-key:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .language-selector {
+            max-height: 280px;
+            overflow-y: auto;
+            position: fixed !important;
+            z-index: 9999999 !important;
+            display: none;
+            min-width: 220px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            backdrop-filter: blur(20px) !important;
+            border: 2px solid rgba(255, 255, 255, 0.3) !important;
+        }
+        
+        .language-selector.show {
+            display: block !important;
+        }
+        
+        .language-dropdown-backdrop {
+            position: fixed !important;
+            top: 0 !important;
+            left: 0 !important;
+            width: 100vw !important;
+            height: 100vh !important;
+            z-index: 9999998 !important;
+            background: transparent !important;
+        }
+        
+        /* New Theme Styles */
+        .theme-dark {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #f1f5f9;
+        }
+        
+        .theme-light {
+            background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+            color: #1e293b;
+        }
+        
+        .theme-gaming {
+            background: linear-gradient(135deg, #1a0033 0%, #330066 50%, #660099 100%);
+            color: #ffffff;
+        }
+        
+        .theme-anime {
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 50%, #fecfef 100%);
+            color: #2d3748;
+        }
+        
+        .theme-minimal {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            color: #2d3748;
+        }
+        
+        .theme-neon {
+            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ff88;
+        }
+        
+        .theme-pastel {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            color: #4a5568;
+        }
+        
+        .theme-ocean {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+        }
+        
+        .theme-sunset {
+            background: linear-gradient(135deg, #ff7e5f 0%, #feb47b 100%);
+            color: #2d3748;
+        }
+        
+        .theme-forest {
+            background: linear-gradient(135deg, #134e5e 0%, #71b280 100%);
+            color: #ffffff;
+        }
+        
+        .theme-cyberpunk {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            color: #00ffff;
+        }
+        
+        .theme-royal {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: #ffffff;
+        }
+        
+        /* Theme-specific glass effects */
+        .theme-dark .glass {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .theme-light .glass {
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .theme-neon .glass {
+            background: rgba(0, 255, 136, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 136, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+        
+        .theme-gaming .glass {
+            background: rgba(102, 0, 153, 0.2);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(102, 0, 153, 0.4);
+            box-shadow: 0 0 20px rgba(102, 0, 153, 0.2);
+        }
+        
+        .theme-pastel .glass {
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.8);
+        }
+        
+        .theme-cyberpunk .glass {
+            background: rgba(0, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(0, 255, 255, 0.3);
+            box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+        }
+    </style>
+</head>
+<body class="theme-dark min-h-screen transition-all duration-300">
+    <!-- Header -->
+    <header class="glass border-b border-white/10 p-3 md:p-4">
+        <div class="max-w-7xl mx-auto flex items-center justify-between">
+            <div class="flex items-center space-x-2 md:space-x-3">
+                <div class="w-8 h-8 md:w-10 md:h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-keyboard text-white text-sm md:text-lg"></i>
+                </div>
+                <h1 class="text-lg md:text-2xl font-bold bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                    TypeRush
+                </h1>
+            </div>
+            
+            <!-- Desktop Navigation -->
+            <nav class="hidden md:flex items-center space-x-6">
+                <button onclick="showSection('typing')" class="nav-btn px-4 py-2 rounded-lg transition-all hover:bg-white/10 active">
+                    <i class="fas fa-keyboard mr-2"></i>Type Test
+                </button>
+                <button onclick="showSection('game')" class="nav-btn px-4 py-2 rounded-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-gamepad mr-2"></i>Games
+                </button>
+                <button onclick="showSection('leaderboard')" class="nav-btn px-4 py-2 rounded-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-trophy mr-2"></i>Leaderboard
+                </button>
+                <button onclick="showSection('profile')" class="nav-btn px-4 py-2 rounded-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-user mr-2"></i>Profile
+                </button>
+                <button onclick="showSection('history')" class="nav-btn px-4 py-2 rounded-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-history mr-2"></i>History
+                </button>
+                <button onclick="toggleSettings()" class="p-2 rounded-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-cog"></i>
+                </button>
+            </nav>
+            
+            <!-- Mobile Navigation -->
+            <div class="md:hidden">
+                <button onclick="toggleMobileMenu()" class="p-2 rounded-lg transition-all hover:bg-white/10">
+                    <i class="fas fa-bars"></i>
+                </button>
+            </div>
+        </div>
+        
+        <!-- Mobile Menu -->
+        <div id="mobile-menu" class="md:hidden hidden mt-4 pt-4 border-t border-white/10">
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="showSection('typing'); toggleMobileMenu()" class="nav-btn-mobile px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-center">
+                    <i class="fas fa-keyboard block mb-1"></i>Type Test
+                </button>
+                <button onclick="showSection('game'); toggleMobileMenu()" class="nav-btn-mobile px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-center">
+                    <i class="fas fa-gamepad block mb-1"></i>Games
+                </button>
+                <button onclick="showSection('leaderboard'); toggleMobileMenu()" class="nav-btn-mobile px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-center">
+                    <i class="fas fa-trophy block mb-1"></i>Leaderboard
+                </button>
+                <button onclick="showSection('profile'); toggleMobileMenu()" class="nav-btn-mobile px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-center">
+                    <i class="fas fa-user block mb-1"></i>Profile
+                </button>
+                <button onclick="showSection('history'); toggleMobileMenu()" class="nav-btn-mobile px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-center">
+                    <i class="fas fa-history block mb-1"></i>History
+                </button>
+                <button onclick="toggleSettings(); toggleMobileMenu()" class="nav-btn-mobile px-3 py-2 rounded-lg transition-all hover:bg-white/10 text-sm text-center">
+                    <i class="fas fa-cog block mb-1"></i>Settings
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto p-3 md:p-6">
+        <!-- Typing Test Section -->
+        <section id="typing-section" class="section">
+            <!-- Stats Bar -->
+            <div class="glass rounded-xl p-4 md:p-6 mb-4 md:mb-6 slide-in">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-6">
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-blue-400" id="wpm">0</div>
+                        <div class="text-xs md:text-sm text-gray-400">WPM</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-green-400" id="accuracy">100</div>
+                        <div class="text-xs md:text-sm text-gray-400">Accuracy %</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-red-400" id="errors">0</div>
+                        <div class="text-xs md:text-sm text-gray-400">Errors</div>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-2xl md:text-3xl font-bold text-purple-400 transition-all duration-300" id="timer">60</div>
+                        <div class="text-xs md:text-sm text-gray-400">Time Left</div>
+                        <div class="w-full bg-white/10 rounded-full h-2 mt-2">
+                            <div id="timer-progress" class="bg-purple-400 h-2 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Test Options -->
+            <div class="glass rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                <div class="flex flex-col lg:flex-row gap-4 items-start lg:items-center lg:justify-between">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full lg:w-auto">
+                        <div class="flex items-center space-x-2 sm:space-x-4">
+                            <label class="text-sm font-medium whitespace-nowrap">Time:</label>
+                            <div class="flex space-x-1 sm:space-x-2">
+                                <button onclick="setTime(15, this)" class="time-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">15s</button>
+                                <button onclick="setTime(30, this)" class="time-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">30s</button>
+                                <button onclick="setTime(60, this)" class="time-btn px-2 sm:px-3 py-1 rounded-lg bg-blue-500 text-white text-xs sm:text-sm">60s</button>
+                                <button onclick="setTime(120, this)" class="time-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">120s</button>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-2 sm:space-x-4">
+                            <label class="text-sm font-medium whitespace-nowrap">Words:</label>
+                            <div class="flex space-x-1 sm:space-x-2">
+                                <button onclick="setWordCount(10, this)" class="word-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">10</button>
+                                <button onclick="setWordCount(25, this)" class="word-btn px-2 sm:px-3 py-1 rounded-lg bg-blue-500 text-white text-xs sm:text-sm">25</button>
+                                <button onclick="setWordCount(50, this)" class="word-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">50</button>
+                                <button onclick="setWordCount(100, this)" class="word-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">100</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-4 w-full lg:w-auto">
+                        <div class="relative">
+                            <button id="language-button" onclick="toggleLanguageDropdown()" class="px-3 sm:px-4 py-2 rounded-lg bg-purple-500 text-white hover:bg-purple-600 transition-all flex items-center text-sm">
+                                <i class="fas fa-language mr-1 sm:mr-2"></i>
+                                <span id="lang-text" class="hidden sm:inline">English</span>
+                                <span class="sm:hidden">EN</span>
+                                <i class="fas fa-chevron-down ml-1 sm:ml-2"></i>
+                            </button>
+                        </div>
+                        <button onclick="toggleGhostMode()" class="px-3 sm:px-4 py-2 rounded-lg bg-orange-500 text-white hover:bg-orange-600 transition-all text-sm">
+                            <i class="fas fa-ghost mr-1 sm:mr-2"></i><span class="hidden sm:inline">Ghost Mode</span><span class="sm:hidden">Ghost</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Typing Area -->
+            <div class="glass rounded-xl p-4 md:p-8 mb-4 md:mb-6">
+                <div id="text-display" class="text-base md:text-xl leading-relaxed mb-4 md:mb-6 min-h-24 md:min-h-32 font-mono max-w-none overflow-hidden">
+                    Click "Start Test" to begin typing...
+                </div>
+                
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-4">
+                    <input type="text" id="typing-input" class="flex-1 bg-white/10 border border-white/20 rounded-lg px-3 md:px-4 py-2 md:py-3 text-base md:text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50" placeholder="Start typing here..." disabled>
+                    <div class="flex gap-2 sm:gap-4">
+                        <button onclick="startTest()" id="start-btn" class="flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all glow text-sm md:text-base">
+                            <i class="fas fa-play mr-1 md:mr-2"></i>Start Test
+                        </button>
+                        <button onclick="resetTest()" class="flex-1 sm:flex-none px-4 md:px-6 py-2 md:py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-all text-sm md:text-base">
+                            <i class="fas fa-redo mr-1 md:mr-2"></i>Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Virtual Keyboard -->
+            <div class="glass rounded-xl p-4 md:p-6">
+                <div class="text-center mb-4">
+                    <h3 class="text-base md:text-lg font-semibold">Virtual Keyboard - <span id="keyboard-lang">English</span></h3>
+                </div>
+                <div id="virtual-keyboard" class="space-y-1 md:space-y-2 overflow-x-auto">
+                    <!-- Keyboard will be generated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Game Section -->
+        <section id="game-section" class="section hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-6 md:mb-8 gap-4">
+                <div class="text-center flex-1">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2 md:mb-4 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">
+                        Typing Games
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400">Challenge yourself with fun typing games!</p>
+                </div>
+                <button onclick="showSection('typing')" class="p-2 md:p-3 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all">
+                    <i class="fas fa-times text-lg md:text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Game Timer Settings -->
+            <div class="glass rounded-xl p-4 md:p-6 mb-4 md:mb-6">
+                <div class="flex flex-wrap gap-3 md:gap-4 items-center justify-center">
+                    <div class="flex flex-col sm:flex-row items-center gap-2 sm:gap-4">
+                        <label class="text-sm font-medium whitespace-nowrap">Game Duration:</label>
+                        <div class="flex space-x-1 sm:space-x-2">
+                            <button onclick="setGameTime(30, this)" class="game-time-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">30s</button>
+                            <button onclick="setGameTime(60, this)" class="game-time-btn px-2 sm:px-3 py-1 rounded-lg bg-blue-500 text-white text-xs sm:text-sm">60s</button>
+                            <button onclick="setGameTime(90, this)" class="game-time-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">90s</button>
+                            <button onclick="setGameTime(120, this)" class="game-time-btn px-2 sm:px-3 py-1 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-xs sm:text-sm">120s</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 mb-6 md:mb-8">
+                <div class="glass rounded-xl p-4 md:p-6 hover:bg-white/5 transition-all cursor-pointer" onclick="startFallingWords()">
+                    <div class="text-center">
+                        <div class="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-green-500 to-blue-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                            <i class="fas fa-meteor text-lg md:text-2xl text-white"></i>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2">Falling Words</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-3 md:mb-4">Type words before they hit the ground!</p>
+                        <button class="px-4 md:px-6 py-2 bg-gradient-to-r from-green-500 to-blue-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-blue-700 transition-all text-sm md:text-base">
+                            Play Now
+                        </button>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-4 md:p-6 hover:bg-white/5 transition-all cursor-pointer" onclick="startSpeedChallenge()">
+                    <div class="text-center">
+                        <div class="w-12 h-12 md:w-16 md:h-16 bg-gradient-to-r from-red-500 to-orange-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                            <i class="fas fa-tachometer-alt text-lg md:text-2xl text-white"></i>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2">Speed Challenge</h3>
+                        <p class="text-sm md:text-base text-gray-400 mb-3 md:mb-4">Get faster with each correct word!</p>
+                        <button class="px-4 md:px-6 py-2 bg-gradient-to-r from-red-500 to-orange-600 text-white rounded-lg font-semibold hover:from-red-600 hover:to-orange-700 transition-all text-sm md:text-base">
+                            Play Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Game Area -->
+            <div id="game-area" class="glass rounded-xl p-4 md:p-8 min-h-[400px] md:min-h-[500px] relative overflow-hidden hidden mt-4">
+                <!-- Game Progress Bar -->
+                <div class="mb-3 md:mb-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-1 sm:gap-0">
+                        <span class="text-xs md:text-sm font-medium text-gray-300">Game Progress</span>
+                        <span class="text-xs md:text-sm font-medium text-gray-300"><span id="words-typed-count">0</span> words typed</span>
+                    </div>
+                    <div class="w-full bg-white/10 rounded-full h-2 md:h-3">
+                        <div id="game-progress-bar" class="bg-gradient-to-r from-green-400 to-blue-500 h-2 md:h-3 rounded-full transition-all duration-300" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div id="game-stats" class="flex flex-col sm:flex-row justify-between items-center mb-6 md:mb-8 bg-black/20 rounded-lg p-3 md:p-4 gap-3 sm:gap-0">
+                    <div class="text-lg md:text-2xl font-bold text-blue-400 text-center sm:text-left">Score: <span id="game-score">0</span></div>
+                    <div class="text-center">
+                        <div class="text-lg md:text-2xl font-bold text-purple-400" id="game-timer">60</div>
+                        <div class="w-24 md:w-32 bg-white/10 rounded-full h-2 mt-1 mx-auto">
+                            <div id="game-timer-progress" class="bg-purple-400 h-2 rounded-full transition-all duration-1000" style="width: 100%"></div>
+                        </div>
+                    </div>
+                    <div class="text-lg md:text-2xl font-bold text-green-400 text-center sm:text-right">Lives: <span id="game-lives">3</span></div>
+                    <button onclick="endGame()" class="px-4 md:px-6 py-2 md:py-3 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-all font-semibold text-sm md:text-base">
+                        End Game
+                    </button>
+                </div>
+                <div id="game-input-area" class="absolute bottom-4 md:bottom-8 left-1/2 transform -translate-x-1/2 w-full max-w-sm md:max-w-md px-4 md:px-8">
+                    <div class="text-center mb-2">
+                        <div class="text-sm font-medium text-white/80 bg-black/40 rounded-lg px-3 py-1 inline-block backdrop-blur-sm">
+                            Type the words as they appear
+                        </div>
+                    </div>
+                    <input type="text" id="game-input" class="w-full bg-black/60 border-2 border-white/50 rounded-xl px-4 md:px-6 py-3 md:py-4 text-lg md:text-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-center font-semibold backdrop-blur-sm text-white placeholder-white/60" placeholder="Type the rising words...">
+                </div>
+            </div>
+        </section>
+
+        <!-- Leaderboard Section -->
+        <section id="leaderboard-section" class="section hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-6 md:mb-8 gap-4">
+                <div class="text-center flex-1">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2 md:mb-4 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                        Leaderboard
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400">See how you rank against other typists!</p>
+                </div>
+                <button onclick="showSection('typing')" class="p-2 md:p-3 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all">
+                    <i class="fas fa-times text-lg md:text-xl"></i>
+                </button>
+            </div>
+
+            <div class="flex justify-center mb-4 md:mb-6">
+                <div class="flex space-x-1 md:space-x-2 bg-white/10 rounded-lg p-1">
+                    <button onclick="showLeaderboard('daily', this)" class="leaderboard-tab px-3 md:px-4 py-2 rounded-lg bg-blue-500 text-white transition-all text-sm md:text-base">Daily</button>
+                    <button onclick="showLeaderboard('weekly', this)" class="leaderboard-tab px-3 md:px-4 py-2 rounded-lg hover:bg-white/10 transition-all text-sm md:text-base">Weekly</button>
+                    <button onclick="showLeaderboard('alltime', this)" class="leaderboard-tab px-3 md:px-4 py-2 rounded-lg hover:bg-white/10 transition-all text-sm md:text-base">All Time</button>
+                </div>
+            </div>
+
+            <div class="glass rounded-xl p-4 md:p-6">
+                <div id="leaderboard-content">
+                    <!-- Leaderboard will be populated by JavaScript -->
+                </div>
+            </div>
+        </section>
+
+        <!-- Practice History Section -->
+        <section id="history-section" class="section hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-6 md:mb-8 gap-4">
+                <div class="text-center flex-1">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2 md:mb-4 bg-gradient-to-r from-green-400 to-teal-500 bg-clip-text text-transparent">
+                        Practice History
+                    </h2>
+                    <p class="text-sm md:text-base text-gray-400">Track your typing progress over time!</p>
+                </div>
+                <button onclick="showSection('typing')" class="p-2 md:p-3 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all">
+                    <i class="fas fa-times text-lg md:text-xl"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
+                <!-- Recent Tests -->
+                <div class="glass rounded-xl p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center">
+                        <i class="fas fa-clock mr-2 text-blue-400"></i>
+                        Recent Tests (Last 10)
+                    </h3>
+                    <div id="practice-history-list" class="space-y-2 md:space-y-3 max-h-80 md:max-h-96 overflow-y-auto">
+                        <!-- History items will be populated by JavaScript -->
+                    </div>
+                    <div class="mt-3 md:mt-4 pt-3 md:pt-4 border-t border-white/20">
+                        <button onclick="clearHistory()" class="w-full px-3 md:px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-all text-sm md:text-base">
+                            <i class="fas fa-trash mr-2"></i>Clear History
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Progress Chart -->
+                <div class="glass rounded-xl p-4 md:p-6">
+                    <h3 class="text-lg md:text-xl font-bold mb-3 md:mb-4 flex items-center">
+                        <i class="fas fa-chart-line mr-2 text-green-400"></i>
+                        Progress Overview
+                    </h3>
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="p-3 md:p-4 bg-white/5 rounded-lg">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-1 sm:gap-0">
+                                <span class="text-sm md:text-base text-gray-300">Average WPM (Last 10 tests)</span>
+                                <span id="avg-wpm" class="text-lg md:text-xl font-bold text-blue-400">--</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-2">
+                                <div id="avg-wpm-bar" class="bg-blue-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 md:p-4 bg-white/5 rounded-lg">
+                            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2 gap-1 sm:gap-0">
+                                <span class="text-sm md:text-base text-gray-300">Average Accuracy (Last 10 tests)</span>
+                                <span id="avg-accuracy" class="text-lg md:text-xl font-bold text-green-400">--</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-2">
+                                <div id="avg-accuracy-bar" class="bg-green-400 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 md:p-4 bg-white/5 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm md:text-base text-gray-300">Best WPM</span>
+                                <span id="best-wpm" class="text-lg md:text-xl font-bold text-purple-400">--</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 md:p-4 bg-white/5 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm md:text-base text-gray-300">Best Accuracy</span>
+                                <span id="best-accuracy" class="text-lg md:text-xl font-bold text-yellow-400">--</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 md:p-4 bg-white/5 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm md:text-base text-gray-300">Total Tests Completed</span>
+                                <span id="total-tests" class="text-lg md:text-xl font-bold text-pink-400">--</span>
+                            </div>
+                        </div>
+                        
+                        <div class="p-3 md:p-4 bg-white/5 rounded-lg">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm md:text-base text-gray-300">Improvement Trend</span>
+                                <span id="improvement-trend" class="text-base md:text-lg font-bold">--</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Profile Section -->
+        <section id="profile-section" class="section hidden">
+            <div class="flex flex-col sm:flex-row items-center justify-between mb-6 md:mb-8 gap-4">
+                <div class="text-center flex-1">
+                    <h2 class="text-2xl md:text-4xl font-bold mb-2 md:mb-4 bg-gradient-to-r from-blue-400 to-purple-500 bg-clip-text text-transparent">
+                        Your Profile
+                    </h2>
+                </div>
+                <button onclick="showSection('typing')" class="p-2 md:p-3 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all">
+                    <i class="fas fa-times text-lg md:text-xl"></i>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 md:gap-6">
+                <div class="glass rounded-xl p-4 md:p-6">
+                    <div class="text-center">
+                        <div class="w-20 h-20 md:w-24 md:h-24 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4">
+                            <i class="fas fa-user text-2xl md:text-3xl text-white"></i>
+                        </div>
+                        <h3 class="text-lg md:text-xl font-bold mb-2" id="username">TypeMaster</h3>
+                        <p class="text-sm md:text-base text-gray-400">Level 15 Typist</p>
+                        <div class="mt-3 md:mt-4">
+                            <div class="text-xs md:text-sm text-gray-400 mb-1">Daily Streak</div>
+                            <div class="text-xl md:text-2xl font-bold text-orange-400">7 days 🔥</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-4 md:p-6">
+                    <h3 class="text-base md:text-lg font-bold mb-3 md:mb-4">📊 Statistics</h3>
+                    <div class="space-y-3 md:space-y-4">
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded text-sm md:text-base">
+                            <span class="flex items-center"><i class="fas fa-tachometer-alt mr-2 text-blue-400"></i>Best WPM:</span>
+                            <span class="font-bold text-blue-400 text-base md:text-lg">85</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded text-sm md:text-base">
+                            <span class="flex items-center"><i class="fas fa-chart-line mr-2 text-green-400"></i>Average WPM:</span>
+                            <span class="font-bold text-green-400 text-base md:text-lg">72</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded text-sm md:text-base">
+                            <span class="flex items-center"><i class="fas fa-bullseye mr-2 text-purple-400"></i>Best Accuracy:</span>
+                            <span class="font-bold text-purple-400 text-base md:text-lg">98%</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded text-sm md:text-base">
+                            <span class="flex items-center"><i class="fas fa-check-circle mr-2 text-yellow-400"></i>Tests Completed:</span>
+                            <span class="font-bold text-yellow-400 text-base md:text-lg">156</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded text-sm md:text-base">
+                            <span class="flex items-center"><i class="fas fa-clock mr-2 text-pink-400"></i>Time Practiced:</span>
+                            <span class="font-bold text-pink-400 text-base md:text-lg">24h 32m</span>
+                        </div>
+                        <div class="flex justify-between items-center p-2 bg-white/5 rounded text-sm md:text-base">
+                            <span class="flex items-center"><i class="fas fa-gamepad mr-2 text-orange-400"></i>Games Won:</span>
+                            <span class="font-bold text-orange-400 text-base md:text-lg">42</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="glass rounded-xl p-4 md:p-6 md:col-span-2 xl:col-span-1">
+                    <h3 class="text-base md:text-lg font-bold mb-3 md:mb-4">Achievements</h3>
+                    <div class="space-y-2 md:space-y-3 max-h-80 overflow-y-auto" id="achievements-list">
+                        <div class="flex items-center space-x-2 md:space-x-3 p-2 bg-white/5 rounded-lg achievement-unlocked">
+                            <div class="text-xl md:text-2xl">🏆</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm md:text-base">Speed Demon</div>
+                                <div class="text-xs md:text-sm text-gray-400">Reach 80+ WPM</div>
+                            </div>
+                            <div class="text-green-400">✓</div>
+                        </div>
+                        <div class="flex items-center space-x-2 md:space-x-3 p-2 bg-white/5 rounded-lg achievement-unlocked">
+                            <div class="text-xl md:text-2xl">🎯</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm md:text-base">Perfect Shot</div>
+                                <div class="text-xs md:text-sm text-gray-400">100% Accuracy</div>
+                            </div>
+                            <div class="text-green-400">✓</div>
+                        </div>
+                        <div class="flex items-center space-x-2 md:space-x-3 p-2 bg-white/5 rounded-lg achievement-unlocked">
+                            <div class="text-xl md:text-2xl">🔥</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm md:text-base">Week Warrior</div>
+                                <div class="text-xs md:text-sm text-gray-400">7-day streak</div>
+                            </div>
+                            <div class="text-green-400">✓</div>
+                        </div>
+                        <div class="flex items-center space-x-2 md:space-x-3 p-2 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-xl md:text-2xl">💯</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm md:text-base">100 WPM Club</div>
+                                <div class="text-xs md:text-sm text-gray-400">Reach 100+ WPM</div>
+                            </div>
+                            <div class="text-gray-500">🔒</div>
+                        </div>
+                        <div class="flex items-center space-x-2 md:space-x-3 p-2 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-xl md:text-2xl">⚡</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm md:text-base">Lightning Fingers</div>
+                                <div class="text-xs md:text-sm text-gray-400">Complete 100 tests</div>
+                            </div>
+                            <div class="text-gray-500">🔒</div>
+                        </div>
+                        <div class="flex items-center space-x-2 md:space-x-3 p-2 bg-white/5 rounded-lg opacity-50">
+                            <div class="text-xl md:text-2xl">🎮</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="font-semibold text-sm md:text-base">Game Master</div>
+                                <div class="text-xs md:text-sm text-gray-400">Score 1000+ in games</div>
+                            </div>
+                            <div class="text-gray-500">🔒</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Language Dropdown (Fixed Position) -->
+    <div id="language-dropdown" class="glass rounded-lg border border-white/20 hidden language-selector shadow-2xl">
+        <button onclick="selectLanguage('english', 'English')" class="block w-full px-4 py-3 text-left hover:bg-white/10 rounded-t-lg transition-all">🇺🇸 English</button>
+        <button onclick="selectLanguage('hindi', 'हिंदी')" class="block w-full px-4 py-3 text-left hover:bg-white/10 transition-all">🇮🇳 हिंदी (Hindi)</button>
+        <button onclick="selectLanguage('tamil', 'தமிழ்')" class="block w-full px-4 py-3 text-left hover:bg-white/10 transition-all">🇮🇳 தமிழ் (Tamil)</button>
+        <button onclick="selectLanguage('telugu', 'తెలుగు')" class="block w-full px-4 py-3 text-left hover:bg-white/10 transition-all">🇮🇳 తెలుగు (Telugu)</button>
+        <button onclick="selectLanguage('bengali', 'বাংলা')" class="block w-full px-4 py-3 text-left hover:bg-white/10 transition-all">🇮🇳 বাংলা (Bengali)</button>
+        <button onclick="selectLanguage('gujarati', 'ગુજરાતી')" class="block w-full px-4 py-3 text-left hover:bg-white/10 transition-all">🇮🇳 ગુજરાતી (Gujarati)</button>
+        <button onclick="selectLanguage('punjabi', 'ਪੰਜਾਬੀ')" class="block w-full px-4 py-3 text-left hover:bg-white/10 rounded-b-lg transition-all">🇮🇳 ਪੰਜਾਬੀ (Punjabi)</button>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm hidden items-center justify-center p-4" style="z-index: 999999;">
+        <div class="glass rounded-xl p-4 md:p-6 w-full max-w-sm md:max-w-md max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-4 md:mb-6">
+                <h3 class="text-lg md:text-xl font-bold">⚙️ Settings</h3>
+                <button onclick="toggleSettings()" class="p-2 rounded-lg bg-red-500 hover:bg-red-600 text-white transition-all">
+                    <i class="fas fa-times text-base md:text-lg"></i>
+                </button>
+            </div>
+            
+            <div class="space-y-4 md:space-y-6">
+                <div>
+                    <label class="block text-sm font-medium mb-2 md:mb-3">🎨 Theme Selection</label>
+                    <div class="grid grid-cols-2 gap-1 md:gap-2 mb-1 md:mb-2">
+                        <button onclick="setTheme('dark', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-slate-800 text-white text-xs md:text-sm hover:scale-105 transition-all">🌙 Dark</button>
+                        <button onclick="setTheme('light', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-gray-100 text-gray-800 text-xs md:text-sm hover:scale-105 transition-all">☀️ Light</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 md:gap-2 mb-1 md:mb-2">
+                        <button onclick="setTheme('gaming', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-purple-600 text-white text-xs md:text-sm hover:scale-105 transition-all">🎮 Gaming</button>
+                        <button onclick="setTheme('neon', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-green-500 text-black text-xs md:text-sm hover:scale-105 transition-all">⚡ Neon</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 md:gap-2 mb-1 md:mb-2">
+                        <button onclick="setTheme('pastel', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-pink-300 text-gray-800 text-xs md:text-sm hover:scale-105 transition-all">🌸 Pastel</button>
+                        <button onclick="setTheme('ocean', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-blue-500 text-white text-xs md:text-sm hover:scale-105 transition-all">🌊 Ocean</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 md:gap-2 mb-1 md:mb-2">
+                        <button onclick="setTheme('sunset', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-orange-400 text-white text-xs md:text-sm hover:scale-105 transition-all">🌅 Sunset</button>
+                        <button onclick="setTheme('forest', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-green-600 text-white text-xs md:text-sm hover:scale-105 transition-all">🌲 Forest</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 md:gap-2 mb-1 md:mb-2">
+                        <button onclick="setTheme('cyberpunk', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-cyan-500 text-black text-xs md:text-sm hover:scale-105 transition-all">🤖 Cyber</button>
+                        <button onclick="setTheme('royal', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-indigo-600 text-white text-xs md:text-sm hover:scale-105 transition-all">👑 Royal</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1 md:gap-2">
+                        <button onclick="setTheme('anime', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-pink-500 text-white text-xs md:text-sm hover:scale-105 transition-all">🌺 Anime</button>
+                        <button onclick="setTheme('minimal', this)" class="theme-btn p-2 md:p-3 rounded-lg bg-gray-500 text-white text-xs md:text-sm hover:scale-105 transition-all">⚪ Minimal</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Font Size</label>
+                    <input type="range" min="16" max="28" value="20" class="w-full" onchange="setFontSize(this.value)">
+                </div>
+                
+                <div>
+                    <label class="flex items-center space-x-3">
+                        <input type="checkbox" id="sound-toggle" class="rounded" checked onchange="toggleSound()">
+                        <span class="text-sm md:text-base">Typing Sounds</span>
+                    </label>
+                </div>
+                
+                <div>
+                    <label class="flex items-center space-x-3">
+                        <input type="checkbox" id="timer-toggle" class="rounded" checked onchange="toggleTimer()">
+                        <span class="text-sm md:text-base">Show Timer</span>
+                    </label>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Difficulty</label>
+                    <div class="flex space-x-1 md:space-x-2">
+                        <button onclick="setDifficulty('easy', this)" class="difficulty-btn flex-1 px-2 md:px-3 py-2 rounded-lg bg-green-500 text-white text-xs md:text-sm">Easy</button>
+                        <button onclick="setDifficulty('medium', this)" class="difficulty-btn flex-1 px-2 md:px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs md:text-sm">Medium</button>
+                        <button onclick="setDifficulty('hard', this)" class="difficulty-btn flex-1 px-2 md:px-3 py-2 rounded-lg bg-white/10 hover:bg-white/20 text-xs md:text-sm">Hard</button>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium mb-2">Music Volume</label>
+                    <input type="range" min="0" max="100" value="50" class="w-full" onchange="setMusicVolume(this.value)">
+                    <div class="flex justify-between text-xs text-gray-400 mt-1">
+                        <span>Silent</span>
+                        <span>Loud</span>
+                    </div>
+                </div>
+                
+                <div class="pt-3 md:pt-4 border-t border-white/20">
+                    <button onclick="toggleSettings()" class="w-full px-3 md:px-4 py-2 md:py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all text-sm md:text-base">
+                        <i class="fas fa-check mr-2"></i>Save & Close Settings
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global Variables
+        let currentTest = {
+            words: [],
+            currentWordIndex: 0,
+            currentCharIndex: 0,
+            startTime: null,
+            timeLimit: 60,
+            wordCount: 25,
+            language: 'english',
+            isActive: false,
+            errors: 0,
+            correctChars: 0,
+            totalChars: 0,
+            ghostMode: false
+        };
+
+        let gameState = {
+            active: false,
+            score: 0,
+            lives: 3,
+            fallingWords: [],
+            gameType: null,
+            gameTimer: null,
+            wordsTyped: 0,
+            wordsMissed: 0,
+            startTime: null,
+            timeLimit: 60,
+            gameTimerInterval: null
+        };
+
+        let settings = {
+            theme: 'dark',
+            fontSize: 20,
+            soundEnabled: true,
+            timerEnabled: true,
+            musicVolume: 50,
+            difficulty: 'easy'
+        };
+
+        let practiceHistory = [];
+
+        // Keyboard Layouts for Different Languages
+        const keyboardLayouts = {
+            english: [
+                ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+                ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+                ['z', 'x', 'c', 'v', 'b', 'n', 'm']
+            ],
+            hindi: [
+                ['क', 'ख', 'ग', 'घ', 'ङ', 'च', 'छ', 'ज', 'झ', 'ञ'],
+                ['ट', 'ठ', 'ड', 'ढ', 'ण', 'त', 'थ', 'द', 'ध', 'न'],
+                ['प', 'फ', 'ब', 'भ', 'म', 'य', 'र', 'ल', 'व'],
+                ['श', 'ष', 'स', 'ह', 'अ', 'आ', 'इ', 'ई', 'उ', 'ऊ']
+            ],
+            tamil: [
+                ['க', 'ங', 'ச', 'ஞ', 'ட', 'ண', 'த', 'ந', 'ப', 'ம'],
+                ['ய', 'ர', 'ல', 'வ', 'ழ', 'ள', 'ற', 'ன', 'ஜ', 'ஶ'],
+                ['ஷ', 'ஸ', 'ஹ', 'அ', 'ஆ', 'இ', 'ஈ', 'உ', 'ஊ'],
+                ['எ', 'ஏ', 'ஐ', 'ஒ', 'ஓ', 'ஔ', 'ஃ']
+            ],
+            telugu: [
+                ['క', 'ఖ', 'గ', 'ఘ', 'ఙ', 'చ', 'ఛ', 'జ', 'ఝ', 'ఞ'],
+                ['ట', 'ఠ', 'డ', 'ఢ', 'ణ', 'త', 'థ', 'ద', 'ధ', 'న'],
+                ['ప', 'ఫ', 'బ', 'భ', 'మ', 'య', 'ర', 'ల', 'వ'],
+                ['శ', 'ష', 'స', 'హ', 'అ', 'ఆ', 'ఇ', 'ఈ', 'ఉ', 'ఊ']
+            ],
+            bengali: [
+                ['ক', 'খ', 'গ', 'ঘ', 'ঙ', 'চ', 'ছ', 'জ', 'ঝ', 'ঞ'],
+                ['ট', 'ঠ', 'ড', 'ঢ', 'ণ', 'ত', 'থ', 'দ', 'ধ', 'ন'],
+                ['প', 'ফ', 'ব', 'ভ', 'ম', 'য', 'র', 'ল', 'শ'],
+                ['ষ', 'স', 'হ', 'অ', 'আ', 'ই', 'ঈ', 'উ', 'ঊ']
+            ],
+            gujarati: [
+                ['ક', 'ખ', 'ગ', 'ઘ', 'ઙ', 'ચ', 'છ', 'જ', 'ઝ', 'ઞ'],
+                ['ટ', 'ઠ', 'ડ', 'ઢ', 'ણ', 'ત', 'થ', 'દ', 'ધ', 'ન'],
+                ['પ', 'ફ', 'બ', 'ભ', 'મ', 'ય', 'ર', 'લ', 'વ'],
+                ['શ', 'ષ', 'સ', 'હ', 'અ', 'આ', 'ઇ', 'ઈ', 'ઉ', 'ઊ']
+            ],
+            punjabi: [
+                ['ਕ', 'ਖ', 'ਗ', 'ਘ', 'ਙ', 'ਚ', 'ਛ', 'ਜ', 'ਝ', 'ਞ'],
+                ['ਟ', 'ਠ', 'ਡ', 'ਢ', 'ਣ', 'ਤ', 'ਥ', 'ਦ', 'ਧ', 'ਨ'],
+                ['ਪ', 'ਫ', 'ਬ', 'ਭ', 'ਮ', 'ਯ', 'ਰ', 'ਲ', 'ਵ'],
+                ['ਸ਼', 'ਸ', 'ਹ', 'ਅ', 'ਆ', 'ਇ', 'ਈ', 'ਉ', 'ਊ']
+            ]
+        };
+
+        // Word Lists by Language and Difficulty
+        const wordLists = {
+            english: {
+                easy: ['the', 'and', 'for', 'are', 'but', 'not', 'you', 'all', 'can', 'had', 'her', 'was', 'one', 'our', 'out', 'day', 'get', 'has', 'him', 'his', 'how', 'man', 'new', 'now', 'old', 'see', 'two', 'way', 'who', 'boy', 'did', 'its', 'let', 'put', 'say', 'she', 'too', 'use'],
+                medium: ['about', 'after', 'again', 'before', 'being', 'could', 'every', 'first', 'found', 'great', 'group', 'house', 'large', 'light', 'might', 'never', 'other', 'place', 'right', 'small', 'sound', 'still', 'such', 'think', 'three', 'under', 'water', 'where', 'while', 'world', 'would', 'write', 'young'],
+                hard: ['although', 'beautiful', 'beginning', 'business', 'character', 'community', 'completely', 'different', 'education', 'experience', 'government', 'important', 'information', 'interesting', 'knowledge', 'management', 'necessary', 'opportunity', 'organization', 'particular', 'performance', 'personality', 'possibility', 'professional', 'relationship', 'responsibility', 'significant', 'technology', 'understanding', 'unfortunately']
+            },
+            hindi: {
+                easy: ['यह', 'एक', 'है', 'मैं', 'तुम', 'वह', 'हम', 'आप', 'वे', 'और', 'या', 'भी', 'से', 'में', 'पर', 'को', 'का', 'की', 'के', 'ने', 'था', 'थी', 'थे', 'हैं', 'हो', 'गया', 'गई', 'गए', 'कर', 'दो', 'तीन', 'चार', 'पांच'],
+                medium: ['अच्छा', 'बुरा', 'बड़ा', 'छोटा', 'नया', 'पुराना', 'काला', 'सफेद', 'लाल', 'नीला', 'हरा', 'पीला', 'ऊपर', 'नीचे', 'आगे', 'पीछे', 'अंदर', 'बाहर', 'यहाँ', 'वहाँ', 'कहाँ', 'कैसे', 'क्या', 'कब', 'क्यों', 'कौन', 'जो', 'लेकिन', 'फिर', 'अभी', 'साथ', 'बिना'],
+                hard: ['अध्ययन', 'व्यवसाय', 'सरकार', 'शिक्षा', 'स्वास्थ्य', 'तकनीक', 'विज्ञान', 'संस्कृति', 'समाज', 'राजनीति', 'अर्थव्यवस्था', 'पर्यावरण', 'प्रकृति', 'इतिहास', 'भूगोल', 'गणित', 'भाषा', 'साहित्य', 'कला', 'संगीत', 'खेल', 'मनोरंजन', 'यात्रा', 'परिवार', 'दोस्त', 'प्रेम', 'खुशी', 'दुःख', 'सफलता', 'असफलता']
+            },
+            tamil: {
+                easy: ['அது', 'இது', 'என்', 'நீ', 'அவன்', 'நாம்', 'நீங்கள்', 'அவர்கள்', 'மற்றும்', 'அல்லது', 'கூட', 'இல்', 'உள்ள', 'மேல்', 'கீழ்', 'முன்', 'பின்', 'உள்ளே', 'வெளியே', 'இங்கே', 'அங்கே', 'எங்கே', 'எப்படி', 'என்ன', 'எப்போது', 'ஏன்', 'யார்', 'ஆனால்', 'பிறகு', 'இப்போது', 'ஒன்று', 'இரண்டு', 'மூன்று'],
+                medium: ['நல்ல', 'கெட்ட', 'பெரிய', 'சிறிய', 'புதிய', 'பழைய', 'கருப்பு', 'வெள்ளை', 'சிவப்பு', 'நீல', 'பச்சை', 'மஞ்சள்', 'மேலே', 'கீழே', 'முன்னால்', 'பின்னால்', 'உள்ளே', 'வெளியே', 'இங்கே', 'அங்கே', 'எங்கே', 'எப்படி', 'என்ன', 'எப்போது', 'ஏன்', 'யார்', 'ஆனால்', 'பிறகு', 'இப்போது', 'ஒன்றாக', 'இல்லாமல்'],
+                hard: ['கல்வி', 'வணிகம்', 'அரசாங்கம்', 'கல்வி', 'சுகாதாரம்', 'தொழில்நுட்பம்', 'அறிவியல்', 'கலாச்சாரம்', 'சமுதாயம்', 'அரசியல்', 'பொருளாதாரம்', 'சுற்றுச்சூழல்', 'இயற்கை', 'வரலாறு', 'புவியியல்', 'கணிதம்', 'மொழி', 'இலக்கியம்', 'கலை', 'இசை', 'விளையாட்டு', 'பொழுதுபோக்கு', 'பயணம்', 'குடும்பம்', 'நண்பர்', 'காதல்', 'மகிழ்ச்சி', 'துக்கம்', 'வெற்றி', 'தோல்வி']
+            },
+            telugu: {
+                easy: ['అది', 'ఇది', 'నేను', 'నువ్వు', 'అతను', 'మేము', 'మీరు', 'వారు', 'మరియు', 'లేదా', 'కూడా', 'లో', 'మీద', 'కింద', 'ముందు', 'వెనుక', 'లోపల', 'బయట', 'ఇక్కడ', 'అక్కడ', 'ఎక్కడ', 'ఎలా', 'ఏమి', 'ఎప్పుడు', 'ఎందుకు', 'ఎవరు', 'కానీ', 'తర్వాత', 'ఇప్పుడు', 'ఒకటి', 'రెండు', 'మూడు'],
+                medium: ['మంచి', 'చెడు', 'పెద్ద', 'చిన్న', 'కొత్త', 'పాత', 'నలుపు', 'తెలుపు', 'ఎరుపు', 'నీలం', 'ఆకుపచ్చ', 'పసుపు', 'పైన', 'కింద', 'ముందు', 'వెనుక', 'లోపల', 'బయట', 'ఇక్కడ', 'అక్కడ', 'ఎక్కడ', 'ఎలా', 'ఏమి', 'ఎప్పుడు', 'ఎందుకు', 'ఎవరు', 'కానీ', 'తర్వాత', 'ఇప్పుడు', 'కలిసి', 'లేకుండా'],
+                hard: ['విద్య', 'వ్యాపారం', 'ప్రభుత్వం', 'విద్య', 'ఆరోగ్యం', 'సాంకేతికత', 'విజ్ఞానం', 'సంస్కృతి', 'సమాజం', 'రాజకీయాలు', 'ఆర్థిక వ్యవస్థ', 'పర్యావరణం', 'ప్రకృతి', 'చరిత్ర', 'భూగోళశాస్త్రం', 'గణితం', 'భాష', 'సాహిత్యం', 'కళ', 'సంగీతం', 'క్రీడలు', 'వినోదం', 'ప్రయాణం', 'కుటుంబం', 'స్నేహితుడు', 'ప్రేమ', 'ఆనందం', 'దుఃఖం', 'విజయం', 'వైఫల్యం']
+            },
+            bengali: {
+                easy: ['এটা', 'এই', 'আমি', 'তুমি', 'সে', 'আমরা', 'তোমরা', 'তারা', 'এবং', 'বা', 'ও', 'এ', 'তে', 'উপর', 'নিচে', 'সামনে', 'পিছনে', 'ভিতরে', 'বাইরে', 'এখানে', 'সেখানে', 'কোথায়', 'কিভাবে', 'কি', 'কখন', 'কেন', 'কে', 'কিন্তু', 'তারপর', 'এখন', 'এক', 'দুই', 'তিন'],
+                medium: ['ভাল', 'খারাপ', 'বড়', 'ছোট', 'নতুন', 'পুরানো', 'কালো', 'সাদা', 'লাল', 'নীল', 'সবুজ', 'হলুদ', 'উপরে', 'নিচে', 'সামনে', 'পিছনে', 'ভিতরে', 'বাইরে', 'এখানে', 'সেখানে', 'কোথায়', 'কিভাবে', 'কি', 'কখন', 'কেন', 'কে', 'কিন্তু', 'তারপর', 'এখন', 'একসাথে', 'ছাড়া'],
+                hard: ['শিক্ষা', 'ব্যবসা', 'সরকার', 'শিক্ষা', 'স্বাস্থ্য', 'প্রযুক্তি', 'বিজ্ঞান', 'সংস্কৃতি', 'সমাজ', 'রাজনীতি', 'অর্থনীতি', 'পরিবেশ', 'প্রকৃতি', 'ইতিহাস', 'ভূগোল', 'গণিত', 'ভাষা', 'সাহিত্য', 'শিল্প', 'সঙ্গীত', 'খেলা', 'বিনোদন', 'ভ্রমণ', 'পরিবার', 'বন্ধু', 'ভালোবাসা', 'আনন্দ', 'দুঃখ', 'সাফল্য', 'ব্যর্থতা']
+            },
+            gujarati: {
+                easy: ['તે', 'આ', 'હું', 'તું', 'તે', 'આપણે', 'તમે', 'તેઓ', 'અને', 'અથવા', 'પણ', 'માં', 'પર', 'નીચે', 'આગળ', 'પાછળ', 'અંદર', 'બહાર', 'અહીં', 'ત્યાં', 'ક્યાં', 'કેવી રીતે', 'શું', 'ક્યારે', 'શા માટે', 'કોણ', 'પરંતુ', 'પછી', 'હવે', 'એક', 'બે', 'ત્રણ'],
+                medium: ['સારું', 'ખરાબ', 'મોટું', 'નાનું', 'નવું', 'જૂનું', 'કાળું', 'સફેદ', 'લાલ', 'વાદળી', 'લીલું', 'પીળું', 'ઉપર', 'નીચે', 'આગળ', 'પાછળ', 'અંદર', 'બહાર', 'અહીં', 'ત્યાં', 'ક્યાં', 'કેવી રીતે', 'શું', 'ક્યારે', 'શા માટે', 'કોણ', 'પરંતુ', 'પછી', 'હવે', 'સાથે', 'વિના'],
+                hard: ['શિક્ષણ', 'વ્યવસાય', 'સરકાર', 'શિક્ષણ', 'આરોગ્ય', 'ટેકનોલોજી', 'વિજ્ઞાન', 'સંસ્કૃતિ', 'સમાજ', 'રાજકારણ', 'અર્થતંત્ર', 'પર્યાવરણ', 'પ્રકૃતિ', 'ઇતિહાસ', 'ભૂગોળ', 'ગણિત', 'ભાષા', 'સાહિત્ય', 'કલા', 'સંગીત', 'રમત', 'મનોરંજન', 'પ્રવાસ', 'કુટુંબ', 'મિત્ર', 'પ્રેમ', 'આનંદ', 'દુઃખ', 'સફળતા', 'નિષ્ફળતા']
+            },
+            punjabi: {
+                easy: ['ਇਹ', 'ਇਹ', 'ਮੈਂ', 'ਤੂੰ', 'ਉਹ', 'ਅਸੀਂ', 'ਤੁਸੀਂ', 'ਉਹ', 'ਅਤੇ', 'ਜਾਂ', 'ਵੀ', 'ਵਿੱਚ', 'ਉੱਤੇ', 'ਹੇਠਾਂ', 'ਅੱਗੇ', 'ਪਿੱਛੇ', 'ਅੰਦਰ', 'ਬਾਹਰ', 'ਇੱਥੇ', 'ਉੱਥੇ', 'ਕਿੱਥੇ', 'ਕਿਵੇਂ', 'ਕੀ', 'ਕਦੋਂ', 'ਕਿਉਂ', 'ਕੌਣ', 'ਪਰ', 'ਫਿਰ', 'ਹੁਣ', 'ਇੱਕ', 'ਦੋ', 'ਤਿੰਨ'],
+                medium: ['ਚੰਗਾ', 'ਮਾੜਾ', 'ਵੱਡਾ', 'ਛੋਟਾ', 'ਨਵਾਂ', 'ਪੁਰਾਣਾ', 'ਕਾਲਾ', 'ਚਿੱਟਾ', 'ਲਾਲ', 'ਨੀਲਾ', 'ਹਰਾ', 'ਪੀਲਾ', 'ਉੱਪਰ', 'ਹੇਠਾਂ', 'ਅੱਗੇ', 'ਪਿੱਛੇ', 'ਅੰਦਰ', 'ਬਾਹਰ', 'ਇੱਥੇ', 'ਉੱਥੇ', 'ਕਿੱਥੇ', 'ਕਿਵੇਂ', 'ਕੀ', 'ਕਦੋਂ', 'ਕਿਉਂ', 'ਕੌਣ', 'ਪਰ', 'ਫਿਰ', 'ਹੁਣ', 'ਨਾਲ', 'ਬਿਨਾਂ'],
+                hard: ['ਸਿੱਖਿਆ', 'ਕਾਰੋਬਾਰ', 'ਸਰਕਾਰ', 'ਸਿੱਖਿਆ', 'ਸਿਹਤ', 'ਤਕਨਾਲੋਜੀ', 'ਵਿਗਿਆਨ', 'ਸੱਭਿਆਚਾਰ', 'ਸਮਾਜ', 'ਰਾਜਨੀਤੀ', 'ਆਰਥਿਕਤਾ', 'ਵਾਤਾਵਰਣ', 'ਕੁਦਰਤ', 'ਇਤਿਹਾਸ', 'ਭੂਗੋਲ', 'ਗਣਿਤ', 'ਭਾਸ਼ਾ', 'ਸਾਹਿਤ', 'ਕਲਾ', 'ਸੰਗੀਤ', 'ਖੇਡ', 'ਮਨੋਰੰਜਨ', 'ਯਾਤਰਾ', 'ਪਰਿਵਾਰ', 'ਦੋਸਤ', 'ਪਿਆਰ', 'ਖੁਸ਼ੀ', 'ਦੁੱਖ', 'ਸਫਲਤਾ', 'ਅਸਫਲਤਾ']
+            }
+        };
+
+        // Language display names
+        const languageNames = {
+            english: 'English',
+            hindi: 'हिंदी',
+            tamil: 'தமிழ்',
+            telugu: 'తెలుగు',
+            bengali: 'বাংলা',
+            gujarati: 'ગુજરાતી',
+            punjabi: 'ਪੰਜਾਬੀ'
+        };
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            generateVirtualKeyboard();
+            loadSettings();
+            loadPracticeHistory();
+            
+            // Add event listeners
+            document.getElementById('typing-input').addEventListener('input', handleTyping);
+            document.getElementById('typing-input').addEventListener('keydown', handleKeyPress);
+            document.getElementById('game-input').addEventListener('input', handleGameInput);
+            document.getElementById('game-input').addEventListener('keydown', handleKeyPress);
+            
+            // Global keyboard listener for virtual keyboard highlighting and shortcuts
+            document.addEventListener('keydown', function(event) {
+                const key = event.key.toLowerCase();
+                highlightKey(key);
+                
+                // ESC key to close sections and return to typing test
+                if (event.key === 'Escape') {
+                    // Close language dropdown if open
+                    const dropdown = document.getElementById('language-dropdown');
+                    if (dropdown && !dropdown.classList.contains('hidden')) {
+                        closeLanguageDropdown();
+                        return;
+                    }
+                    
+                    // Close settings modal if open
+                    const settingsModal = document.getElementById('settings-modal');
+                    if (settingsModal && !settingsModal.classList.contains('hidden')) {
+                        toggleSettings();
+                        return;
+                    }
+                    
+                    // Close sections and return to typing test
+                    const currentSection = document.querySelector('.section:not(.hidden)');
+                    if (currentSection && currentSection.id !== 'typing-section') {
+                        showSection('typing');
+                    }
+                }
+            });
+            
+            // Close dropdown on window resize
+            window.addEventListener('resize', function() {
+                const dropdown = document.getElementById('language-dropdown');
+                if (dropdown && !dropdown.classList.contains('hidden')) {
+                    closeLanguageDropdown();
+                }
+            });
+            
+            // Generate initial text and leaderboard
+            generateText();
+            showLeaderboard('daily');
+        });
+
+        // Navigation
+        function showSection(sectionName) {
+            // Hide all sections
+            document.querySelectorAll('.section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            
+            // Show selected section
+            document.getElementById(sectionName + '-section').classList.remove('hidden');
+            
+            // Update nav buttons (both desktop and mobile)
+            document.querySelectorAll('.nav-btn, .nav-btn-mobile').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white', 'active');
+                btn.classList.add('hover:bg-white/10');
+            });
+            
+            // Find and highlight the clicked button
+            const clickedBtn = document.querySelector(`[onclick*="showSection('${sectionName}')"]`);
+            if (clickedBtn) {
+                clickedBtn.classList.add('bg-blue-500', 'text-white', 'active');
+                clickedBtn.classList.remove('hover:bg-white/10');
+            }
+            
+            // Load specific section data
+            if (sectionName === 'history') {
+                displayPracticeHistory();
+            } else if (sectionName === 'leaderboard') {
+                showLeaderboard('daily');
+            }
+        }
+
+        function toggleMobileMenu() {
+            const mobileMenu = document.getElementById('mobile-menu');
+            mobileMenu.classList.toggle('hidden');
+        }
+
+        // Language Functions
+        function toggleLanguageDropdown() {
+            const dropdown = document.getElementById('language-dropdown');
+            const button = document.getElementById('language-button');
+            
+            if (dropdown.classList.contains('hidden')) {
+                // Use fixed positioning to ensure it stays on top
+                const buttonRect = button.getBoundingClientRect();
+                const dropdownHeight = 280;
+                const viewportHeight = window.innerHeight;
+                const viewportWidth = window.innerWidth;
+                
+                dropdown.style.position = 'fixed';
+                dropdown.style.zIndex = '9999999';
+                dropdown.style.display = 'block';
+                
+                // Ensure dropdown doesn't go off-screen horizontally
+                let leftPosition = buttonRect.left;
+                const dropdownWidth = 220;
+                if (leftPosition + dropdownWidth > viewportWidth) {
+                    leftPosition = Math.max(10, buttonRect.right - dropdownWidth);
+                }
+                dropdown.style.left = leftPosition + 'px';
+                
+                // Check if dropdown would go below viewport, position it above the button
+                if (buttonRect.bottom + dropdownHeight + 8 > viewportHeight) {
+                    dropdown.style.top = Math.max(10, buttonRect.top - dropdownHeight - 8) + 'px';
+                } else {
+                    dropdown.style.top = (buttonRect.bottom + 8) + 'px';
+                }
+                
+                dropdown.classList.remove('hidden');
+                dropdown.classList.add('show');
+                
+                // Add backdrop to close dropdown when clicking outside
+                const backdrop = document.createElement('div');
+                backdrop.id = 'dropdown-backdrop';
+                backdrop.className = 'language-dropdown-backdrop';
+                backdrop.onclick = () => {
+                    closeLanguageDropdown();
+                };
+                document.body.appendChild(backdrop);
+            } else {
+                closeLanguageDropdown();
+            }
+        }
+        
+        function closeLanguageDropdown() {
+            const dropdown = document.getElementById('language-dropdown');
+            const backdrop = document.getElementById('dropdown-backdrop');
+            
+            dropdown.classList.add('hidden');
+            dropdown.classList.remove('show');
+            dropdown.style.display = 'none';
+            
+            if (backdrop) {
+                backdrop.remove();
+            }
+        }
+
+        function selectLanguage(langCode, langName) {
+            // Update current test language
+            currentTest.language = langCode;
+            
+            // Update UI text
+            document.getElementById('lang-text').textContent = langName;
+            document.getElementById('keyboard-lang').textContent = languageNames[langCode];
+            
+            // Update font class for text display
+            const textDisplay = document.getElementById('text-display');
+            const gameInput = document.getElementById('game-input');
+            const typingInput = document.getElementById('typing-input');
+            
+            // Remove all language classes
+            const langClasses = ['lang-hindi', 'lang-tamil', 'lang-telugu', 'lang-bengali', 'lang-gujarati', 'lang-punjabi'];
+            langClasses.forEach(cls => {
+                if (textDisplay) textDisplay.classList.remove(cls);
+                if (gameInput) gameInput.classList.remove(cls);
+                if (typingInput) typingInput.classList.remove(cls);
+            });
+            
+            // Add appropriate language class
+            if (langCode !== 'english') {
+                const langClass = `lang-${langCode}`;
+                if (textDisplay) textDisplay.classList.add(langClass);
+                if (gameInput) gameInput.classList.add(langClass);
+                if (typingInput) typingInput.classList.add(langClass);
+            }
+            
+            // Close dropdown
+            closeLanguageDropdown();
+            
+            // Reset test if active
+            if (currentTest.isActive) {
+                resetTest();
+            }
+            
+            // Regenerate text and keyboard with new language
+            generateText();
+            generateVirtualKeyboard();
+            
+            // Show language change notification
+            showLanguageChangeNotification(langName);
+        }
+        
+        function showLanguageChangeNotification(langName) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 glass rounded-lg p-4 z-50 slide-in';
+            notification.style.zIndex = '9999999';
+            
+            notification.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🌐</div>
+                    <div>
+                        <div class="font-semibold">Language Changed</div>
+                        <div class="text-sm opacity-75">Now typing in ${langName}</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 2500);
+        }
+
+        // Text Generation
+        function generateText() {
+            const words = wordLists[currentTest.language][settings.difficulty];
+            currentTest.words = [];
+            
+            for (let i = 0; i < currentTest.wordCount; i++) {
+                currentTest.words.push(words[Math.floor(Math.random() * words.length)]);
+            }
+            
+            displayText();
+        }
+
+        function displayText() {
+            const textDisplay = document.getElementById('text-display');
+            const input = document.getElementById('typing-input').value;
+            textDisplay.innerHTML = '';
+            
+            currentTest.words.forEach((word, wordIndex) => {
+                const wordSpan = document.createElement('span');
+                wordSpan.className = 'word';
+                
+                // Add space before word (except first word)
+                if (wordIndex > 0) {
+                    const spaceSpan = document.createElement('span');
+                    spaceSpan.textContent = ' ';
+                    spaceSpan.className = 'char';
+                    textDisplay.appendChild(spaceSpan);
+                }
+                
+                // Highlight current word
+                if (wordIndex === currentTest.currentWordIndex) {
+                    wordSpan.classList.add('bg-white/10', 'px-1', 'rounded');
+                }
+                
+                word.split('').forEach((char, charIndex) => {
+                    const charSpan = document.createElement('span');
+                    charSpan.textContent = char;
+                    charSpan.className = 'char';
+                    
+                    // Current character cursor
+                    if (wordIndex === currentTest.currentWordIndex && charIndex === currentTest.currentCharIndex) {
+                        charSpan.classList.add('current');
+                    }
+                    
+                    // Character correctness for current word
+                    if (wordIndex === currentTest.currentWordIndex && charIndex < input.length) {
+                        if (input[charIndex] === char) {
+                            charSpan.classList.add('correct');
+                        } else {
+                            charSpan.classList.add('incorrect');
+                        }
+                    }
+                    
+                    // Completed words
+                    if (wordIndex < currentTest.currentWordIndex) {
+                        charSpan.classList.add('correct');
+                    }
+                    
+                    wordSpan.appendChild(charSpan);
+                });
+                
+                textDisplay.appendChild(wordSpan);
+            });
+        }
+
+        // Test Controls
+        function startTest() {
+            currentTest.isActive = true;
+            currentTest.startTime = Date.now();
+            currentTest.currentWordIndex = 0;
+            currentTest.currentCharIndex = 0;
+            currentTest.errors = 0;
+            currentTest.correctChars = 0;
+            currentTest.totalChars = 0;
+            
+            // Reset stats display immediately
+            document.getElementById('wpm').textContent = '0';
+            document.getElementById('accuracy').textContent = '100';
+            document.getElementById('errors').textContent = '0';
+            
+            document.getElementById('typing-input').disabled = false;
+            document.getElementById('typing-input').focus();
+            document.getElementById('start-btn').textContent = 'Testing...';
+            document.getElementById('start-btn').disabled = true;
+            
+            generateText();
+            startTimer();
+            startStatsUpdater(); // Start real-time stats updates
+            startRhythmicBeats();
+            
+            if (currentTest.ghostMode) {
+                startGhostRace();
+            }
+        }
+
+        function resetTest() {
+            currentTest.isActive = false;
+            currentTest.startTime = null;
+            currentTest.currentWordIndex = 0;
+            currentTest.currentCharIndex = 0;
+            currentTest.errors = 0;
+            currentTest.correctChars = 0;
+            currentTest.totalChars = 0;
+            
+            // Stop rhythmic beats
+            if (window.rhythmTimer) {
+                clearInterval(window.rhythmTimer);
+                window.rhythmTimer = null;
+            }
+            
+            // Clear any existing timer
+            if (window.testTimer) {
+                clearInterval(window.testTimer);
+                window.testTimer = null;
+            }
+            
+            // Stop stats updater
+            if (window.statsUpdater) {
+                clearInterval(window.statsUpdater);
+                window.statsUpdater = null;
+            }
+            
+            // Reset UI elements
+            document.getElementById('typing-input').value = '';
+            document.getElementById('typing-input').disabled = true;
+            document.getElementById('start-btn').textContent = 'Start Test';
+            document.getElementById('start-btn').disabled = false;
+            
+            // Reset timer display and progress bar
+            const timerElement = document.getElementById('timer');
+            const progressBar = document.getElementById('timer-progress');
+            
+            timerElement.textContent = currentTest.timeLimit;
+            timerElement.className = 'text-3xl font-bold text-purple-400 transition-all duration-300';
+            timerElement.classList.remove('animate-pulse');
+            
+            if (progressBar) {
+                progressBar.style.width = '100%';
+                progressBar.className = 'bg-purple-400 h-2 rounded-full transition-all duration-1000';
+            }
+            
+            updateStats();
+            generateText();
+        }
+
+        function endTest() {
+            currentTest.isActive = false;
+            
+            // Stop rhythmic beats
+            if (window.rhythmTimer) {
+                clearInterval(window.rhythmTimer);
+                window.rhythmTimer = null;
+            }
+            
+            // Clear timer
+            if (window.testTimer) {
+                clearInterval(window.testTimer);
+                window.testTimer = null;
+            }
+            
+            // Stop stats updater
+            if (window.statsUpdater) {
+                clearInterval(window.statsUpdater);
+                window.statsUpdater = null;
+            }
+            
+            document.getElementById('typing-input').disabled = true;
+            document.getElementById('start-btn').textContent = 'Start Test';
+            document.getElementById('start-btn').disabled = false;
+            
+            showResults();
+        }
+
+        // Typing Handler
+        function handleTyping(event) {
+            if (!currentTest.isActive) return;
+            
+            const input = event.target.value;
+            const currentWord = currentTest.words[currentTest.currentWordIndex];
+            
+            // Check if word is complete (space pressed or exact match)
+            if (input.endsWith(' ')) {
+                const typedWord = input.trim();
+                
+                if (typedWord === currentWord) {
+                    // Correct word - play word completion sound
+                    playTypingSound('word');
+                    currentTest.correctChars += currentWord.length + 1; // +1 for space
+                    currentTest.currentWordIndex++;
+                    currentTest.currentCharIndex = 0;
+                    
+                    // Check if test is complete - stop timer immediately
+                    if (currentTest.currentWordIndex >= currentTest.words.length) {
+                        playTypingSound('complete');
+                        // Stop timer immediately when test completes
+                        if (window.testTimer) {
+                            clearInterval(window.testTimer);
+                            window.testTimer = null;
+                        }
+                        endTest();
+                        return;
+                    }
+                } else {
+                    // Incorrect word - play error sound
+                    playTypingSound('error');
+                    currentTest.errors++;
+                }
+                
+                event.target.value = '';
+                currentTest.totalChars += typedWord.length + 1;
+            } else {
+                // Update character position and check for errors
+                currentTest.currentCharIndex = input.length;
+                
+                // Check current character correctness and play appropriate sound
+                if (input.length > 0) {
+                    const currentCharIndex = input.length - 1;
+                    const expectedChar = currentWord[currentCharIndex];
+                    const typedChar = input[currentCharIndex];
+                    
+                    if (typedChar === expectedChar) {
+                        playTypingSound('letter', true);
+                    } else {
+                        playTypingSound('letter', false);
+                    }
+                }
+                
+                // Check for character-level errors
+                let correctSoFar = 0;
+                for (let i = 0; i < Math.min(input.length, currentWord.length); i++) {
+                    if (input[i] === currentWord[i]) {
+                        correctSoFar++;
+                    }
+                }
+                
+                currentTest.totalChars = currentTest.correctChars + input.length;
+            }
+            
+            // Update stats in real-time
+            updateStats();
+            displayText();
+        }
+        
+        // Start continuous stats updates when test is active
+        function startStatsUpdater() {
+            if (window.statsUpdater) {
+                clearInterval(window.statsUpdater);
+            }
+            
+            window.statsUpdater = setInterval(() => {
+                if (currentTest.isActive) {
+                    updateStats();
+                } else {
+                    clearInterval(window.statsUpdater);
+                    window.statsUpdater = null;
+                }
+            }, 100); // Update every 100ms for smooth real-time updates
+        }
+
+        function handleKeyPress(event) {
+            if (!currentTest.isActive && !gameState.active) return;
+            
+            const key = event.key.toLowerCase();
+            highlightKey(key);
+            
+            // Play space bar sound for space key
+            if (event.key === ' ') {
+                playTypingSound('space');
+            }
+            
+            // Add subtle background beat every few keystrokes
+            if (Math.random() < 0.1) { // 10% chance for background beat
+                setTimeout(() => playBackgroundBeat(), 100);
+            }
+        }
+
+        // Stats and Timer
+        function updateStats() {
+            if (!currentTest.isActive && !currentTest.startTime) {
+                // Reset stats when not active
+                document.getElementById('wpm').textContent = '0';
+                document.getElementById('accuracy').textContent = '100';
+                document.getElementById('errors').textContent = '0';
+                return;
+            }
+            
+            const timeElapsed = currentTest.startTime ? (Date.now() - currentTest.startTime) / 1000 / 60 : 0;
+            const wpm = timeElapsed > 0 ? Math.round((currentTest.correctChars / 5) / timeElapsed) : 0;
+            
+            // Calculate real-time accuracy based on actual typing
+            let totalTypedChars = 0;
+            let correctTypedChars = 0;
+            
+            // Count all completed words
+            for (let i = 0; i < currentTest.currentWordIndex; i++) {
+                totalTypedChars += currentTest.words[i].length;
+                correctTypedChars += currentTest.words[i].length; // Completed words are correct
+                if (i < currentTest.words.length - 1) { // Add space except for last word
+                    totalTypedChars += 1;
+                    correctTypedChars += 1;
+                }
+            }
+            
+            // Count current word progress
+            const currentInput = document.getElementById('typing-input').value;
+            const currentWord = currentTest.words[currentTest.currentWordIndex] || '';
+            
+            // Add current input to total typed characters
+            totalTypedChars += currentInput.length;
+            
+            // Count correct characters in current input
+            for (let i = 0; i < Math.min(currentInput.length, currentWord.length); i++) {
+                if (currentInput[i] === currentWord[i]) {
+                    correctTypedChars++;
+                }
+            }
+            
+            // Calculate accuracy - if no characters typed yet, show 100%
+            const accuracy = totalTypedChars > 0 ? Math.round((correctTypedChars / totalTypedChars) * 100) : 100;
+            
+            // Count real-time errors
+            let errorCount = 0;
+            
+            // Count errors in current input
+            for (let i = 0; i < currentInput.length; i++) {
+                if (i >= currentWord.length || currentInput[i] !== currentWord[i]) {
+                    errorCount++;
+                }
+            }
+            
+            // Add word-level errors (from completed incorrect words)
+            errorCount += currentTest.errors;
+            
+            // Update display with smooth transitions
+            document.getElementById('wpm').textContent = wpm;
+            document.getElementById('accuracy').textContent = Math.max(0, Math.min(100, accuracy));
+            document.getElementById('errors').textContent = errorCount;
+            
+            // Add visual feedback for performance
+            const wpmElement = document.getElementById('wpm');
+            const accuracyElement = document.getElementById('accuracy');
+            
+            // Color coding for WPM
+            if (wpm >= 80) {
+                wpmElement.className = 'text-3xl font-bold text-green-400';
+            } else if (wpm >= 60) {
+                wpmElement.className = 'text-3xl font-bold text-blue-400';
+            } else if (wpm >= 40) {
+                wpmElement.className = 'text-3xl font-bold text-yellow-400';
+            } else {
+                wpmElement.className = 'text-3xl font-bold text-red-400';
+            }
+            
+            // Color coding for accuracy
+            if (accuracy >= 95) {
+                accuracyElement.className = 'text-3xl font-bold text-green-400';
+            } else if (accuracy >= 90) {
+                accuracyElement.className = 'text-3xl font-bold text-blue-400';
+            } else if (accuracy >= 80) {
+                accuracyElement.className = 'text-3xl font-bold text-yellow-400';
+            } else {
+                accuracyElement.className = 'text-3xl font-bold text-red-400';
+            }
+        }
+
+        function startTimer() {
+            // Clear any existing timer
+            if (window.testTimer) {
+                clearInterval(window.testTimer);
+            }
+            
+            // Reset progress bar
+            const progressBar = document.getElementById('timer-progress');
+            if (progressBar) {
+                progressBar.style.width = '100%';
+            }
+            
+            window.testTimer = setInterval(() => {
+                if (!currentTest.isActive) {
+                    clearInterval(window.testTimer);
+                    window.testTimer = null;
+                    return;
+                }
+                
+                const elapsed = Math.floor((Date.now() - currentTest.startTime) / 1000);
+                const remaining = currentTest.timeLimit - elapsed;
+                const progress = Math.max(0, (remaining / currentTest.timeLimit) * 100);
+                
+                // Update timer display
+                const timerElement = document.getElementById('timer');
+                timerElement.textContent = Math.max(0, remaining);
+                
+                // Update progress bar
+                if (progressBar) {
+                    progressBar.style.width = progress + '%';
+                    
+                    // Change color based on remaining time
+                    if (progress < 20) {
+                        progressBar.className = 'bg-red-400 h-2 rounded-full transition-all duration-1000';
+                        timerElement.className = 'text-3xl font-bold text-red-400 transition-all duration-300';
+                    } else if (progress < 50) {
+                        progressBar.className = 'bg-yellow-400 h-2 rounded-full transition-all duration-1000';
+                        timerElement.className = 'text-3xl font-bold text-yellow-400 transition-all duration-300';
+                    } else {
+                        progressBar.className = 'bg-purple-400 h-2 rounded-full transition-all duration-1000';
+                        timerElement.className = 'text-3xl font-bold text-purple-400 transition-all duration-300';
+                    }
+                }
+                
+                // Add pulsing effect when time is low
+                if (remaining <= 10 && remaining > 0) {
+                    timerElement.classList.add('animate-pulse');
+                } else {
+                    timerElement.classList.remove('animate-pulse');
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(window.testTimer);
+                    window.testTimer = null;
+                    endTest();
+                }
+            }, 1000);
+        }
+
+        // Virtual Keyboard
+        function generateVirtualKeyboard() {
+            const keyboard = document.getElementById('virtual-keyboard');
+            keyboard.innerHTML = '';
+            
+            const layout = keyboardLayouts[currentTest.language];
+            
+            layout.forEach((row, rowIndex) => {
+                const rowDiv = document.createElement('div');
+                rowDiv.className = 'flex justify-center space-x-1 mb-1 overflow-x-auto';
+                
+                row.forEach(key => {
+                    const keyDiv = document.createElement('div');
+                    keyDiv.className = 'keyboard-key bg-white/10 border border-white/20 rounded flex items-center justify-center font-mono text-xs md:text-sm flex-shrink-0';
+                    keyDiv.textContent = key;
+                    keyDiv.id = `key-${key}`;
+                    rowDiv.appendChild(keyDiv);
+                });
+                
+                keyboard.appendChild(rowDiv);
+            });
+            
+            // Add space bar row
+            const spaceRowDiv = document.createElement('div');
+            spaceRowDiv.className = 'flex justify-center mt-2';
+            
+            const spaceKey = document.createElement('div');
+            spaceKey.className = 'keyboard-key bg-white/10 border border-white/20 rounded flex items-center justify-center font-mono text-xs md:text-sm px-8 md:px-16 py-2';
+            spaceKey.textContent = 'Space';
+            spaceKey.setAttribute('data-key', 'space');
+            spaceKey.id = 'key-space';
+            
+            spaceRowDiv.appendChild(spaceKey);
+            keyboard.appendChild(spaceRowDiv);
+        }
+
+        function highlightKey(key) {
+            // For multilingual support, we need to check all possible keys
+            const allKeys = document.querySelectorAll('.keyboard-key');
+            allKeys.forEach(keyElement => {
+                const keyText = keyElement.textContent;
+                // Check for exact match (case-sensitive for non-English languages)
+                if (keyText === key || keyText.toLowerCase() === key.toLowerCase()) {
+                    keyElement.classList.add('pressed');
+                    setTimeout(() => {
+                        keyElement.classList.remove('pressed');
+                    }, 150);
+                }
+            });
+            
+            // Special handling for space key
+            if (key === ' ' || key === 'Space') {
+                const spaceKeys = document.querySelectorAll('[data-key="space"]');
+                spaceKeys.forEach(spaceKey => {
+                    spaceKey.classList.add('pressed');
+                    setTimeout(() => {
+                        spaceKey.classList.remove('pressed');
+                    }, 150);
+                });
+            }
+        }
+
+        // Settings
+        function setTime(time, element = null) {
+            currentTest.timeLimit = time;
+            document.getElementById('timer').textContent = time;
+            
+            // Update button styles
+            document.querySelectorAll('.time-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-white/10');
+            });
+            
+            // Highlight clicked button
+            const targetBtn = element || document.querySelector(`[onclick="setTime(${time})"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('bg-blue-500', 'text-white');
+                targetBtn.classList.remove('bg-white/10');
+            }
+        }
+
+        function setWordCount(count, element = null) {
+            currentTest.wordCount = count;
+            
+            // Update button styles
+            document.querySelectorAll('.word-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-white/10');
+            });
+            
+            // Highlight clicked button
+            const targetBtn = element || document.querySelector(`[onclick="setWordCount(${count})"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('bg-blue-500', 'text-white');
+                targetBtn.classList.remove('bg-white/10');
+            }
+            
+            generateText();
+        }
+
+        function toggleGhostMode() {
+            currentTest.ghostMode = !currentTest.ghostMode;
+            event.target.classList.toggle('bg-orange-600');
+        }
+
+        function toggleSettings() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.toggle('hidden');
+            modal.classList.toggle('flex');
+        }
+
+        function setTheme(theme, element = null) {
+            settings.theme = theme;
+            document.body.className = `theme-${theme} min-h-screen transition-all duration-500`;
+            
+            // Update theme buttons
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('ring-2', 'ring-blue-500', 'ring-white', 'ring-cyan-400', 'ring-green-400');
+                btn.style.transform = 'scale(1)';
+            });
+            
+            // Highlight selected theme with appropriate ring color
+            const targetBtn = element || document.querySelector(`[onclick*="setTheme('${theme}')"]`);
+            if (targetBtn) {
+                let ringColor = 'ring-blue-500';
+                if (theme === 'neon' || theme === 'cyberpunk') {
+                    ringColor = 'ring-cyan-400';
+                } else if (theme === 'forest') {
+                    ringColor = 'ring-green-400';
+                } else if (theme === 'light' || theme === 'pastel') {
+                    ringColor = 'ring-white';
+                }
+                
+                targetBtn.classList.add('ring-2', ringColor);
+                targetBtn.style.transform = 'scale(1.05)';
+            }
+            
+            // Add theme transition effect
+            document.body.style.transition = 'all 0.5s ease-in-out';
+            
+            // Show theme change notification
+            showThemeNotification(theme);
+            
+            saveSettings();
+        }
+        
+        function showThemeNotification(theme) {
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 glass rounded-lg p-4 z-50 slide-in';
+            notification.style.zIndex = '999999';
+            
+            const themeNames = {
+                dark: '🌙 Dark Theme',
+                light: '☀️ Light Theme',
+                gaming: '🎮 Gaming Theme',
+                neon: '⚡ Neon Theme',
+                pastel: '🌸 Pastel Theme',
+                ocean: '🌊 Ocean Theme',
+                sunset: '🌅 Sunset Theme',
+                forest: '🌲 Forest Theme',
+                cyberpunk: '🤖 Cyberpunk Theme',
+                royal: '👑 Royal Theme',
+                anime: '🌺 Anime Theme',
+                minimal: '⚪ Minimal Theme'
+            };
+            
+            notification.innerHTML = `
+                <div class="flex items-center space-x-3">
+                    <div class="text-2xl">🎨</div>
+                    <div>
+                        <div class="font-semibold">${themeNames[theme] || 'Theme Applied'}</div>
+                        <div class="text-sm opacity-75">Theme changed successfully!</div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 2000);
+        }
+
+        function setFontSize(size) {
+            settings.fontSize = size;
+            document.getElementById('text-display').style.fontSize = size + 'px';
+            saveSettings();
+        }
+
+        function toggleSound() {
+            settings.soundEnabled = document.getElementById('sound-toggle').checked;
+            saveSettings();
+        }
+
+        function toggleTimer() {
+            settings.timerEnabled = document.getElementById('timer-toggle').checked;
+            document.getElementById('timer').style.display = settings.timerEnabled ? 'block' : 'none';
+            saveSettings();
+        }
+        
+        function setMusicVolume(volume) {
+            settings.musicVolume = parseInt(volume);
+            saveSettings();
+        }
+        
+        function getVolumeMultiplier() {
+            return settings.musicVolume / 100;
+        }
+        
+        function setDifficulty(difficulty, element = null) {
+            settings.difficulty = difficulty;
+            
+            // Update button styles
+            document.querySelectorAll('.difficulty-btn').forEach(btn => {
+                btn.classList.remove('bg-green-500', 'bg-yellow-500', 'bg-red-500', 'text-white');
+                btn.classList.add('bg-white/10', 'hover:bg-white/20');
+            });
+            
+            // Highlight selected difficulty
+            const targetBtn = element || document.querySelector(`[onclick="setDifficulty('${difficulty}')"]`);
+            if (targetBtn) {
+                targetBtn.classList.remove('bg-white/10', 'hover:bg-white/20');
+                if (difficulty === 'easy') {
+                    targetBtn.classList.add('bg-green-500', 'text-white');
+                } else if (difficulty === 'medium') {
+                    targetBtn.classList.add('bg-yellow-500', 'text-white');
+                } else {
+                    targetBtn.classList.add('bg-red-500', 'text-white');
+                }
+            }
+            
+            generateText();
+            saveSettings();
+        }
+
+        function setGameTime(time, element = null) {
+            gameState.timeLimit = time;
+            document.getElementById('game-timer').textContent = time;
+            
+            // Update button styles
+            document.querySelectorAll('.game-time-btn').forEach(btn => {
+                btn.classList.remove('bg-blue-500', 'text-white');
+                btn.classList.add('bg-white/10');
+            });
+            
+            // Highlight clicked button
+            const targetBtn = element || document.querySelector(`[onclick="setGameTime(${time})"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('bg-blue-500', 'text-white');
+                targetBtn.classList.remove('bg-white/10');
+            }
+        }
+
+        // Games
+        function startFallingWords() {
+            document.getElementById('game-area').classList.remove('hidden');
+            
+            // Reset progress bar
+            document.getElementById('game-progress-bar').style.width = '0%';
+            document.getElementById('words-typed-count').textContent = '0';
+            
+            showCountdown(() => {
+                gameState.active = true;
+                gameState.gameType = 'falling';
+                gameState.score = 0;
+                gameState.lives = 3;
+                gameState.fallingWords = [];
+                gameState.wordsTyped = 0;
+                gameState.wordsMissed = 0;
+                gameState.startTime = Date.now();
+                
+                document.getElementById('game-input').focus();
+                updateGameStats();
+                startGameTimer();
+                spawnRisingWord();
+            });
+        }
+
+        function startSpeedChallenge() {
+            document.getElementById('game-area').classList.remove('hidden');
+            
+            // Reset progress bar
+            document.getElementById('game-progress-bar').style.width = '0%';
+            document.getElementById('words-typed-count').textContent = '0';
+            
+            showCountdown(() => {
+                gameState.active = true;
+                gameState.gameType = 'speed';
+                gameState.score = 0;
+                gameState.lives = 3;
+                gameState.speed = 1;
+                gameState.wordsTyped = 0;
+                gameState.wordsMissed = 0;
+                gameState.startTime = Date.now();
+                
+                document.getElementById('game-input').focus();
+                updateGameStats();
+                startGameTimer();
+                spawnRisingWord();
+            });
+        }
+
+        function startGameTimer() {
+            // Clear any existing timer
+            if (gameState.gameTimerInterval) {
+                clearInterval(gameState.gameTimerInterval);
+            }
+            
+            // Reset progress bar
+            const progressBar = document.getElementById('game-timer-progress');
+            if (progressBar) {
+                progressBar.style.width = '100%';
+            }
+            
+            gameState.gameTimerInterval = setInterval(() => {
+                if (!gameState.active) {
+                    clearInterval(gameState.gameTimerInterval);
+                    gameState.gameTimerInterval = null;
+                    return;
+                }
+                
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000);
+                const remaining = gameState.timeLimit - elapsed;
+                const progress = Math.max(0, (remaining / gameState.timeLimit) * 100);
+                
+                // Update timer display
+                const timerElement = document.getElementById('game-timer');
+                timerElement.textContent = Math.max(0, remaining);
+                
+                // Update progress bar
+                if (progressBar) {
+                    progressBar.style.width = progress + '%';
+                    
+                    // Change color based on remaining time
+                    if (progress < 20) {
+                        progressBar.className = 'bg-red-400 h-2 rounded-full transition-all duration-1000';
+                        timerElement.className = 'text-2xl font-bold text-red-400';
+                    } else if (progress < 50) {
+                        progressBar.className = 'bg-yellow-400 h-2 rounded-full transition-all duration-1000';
+                        timerElement.className = 'text-2xl font-bold text-yellow-400';
+                    } else {
+                        progressBar.className = 'bg-purple-400 h-2 rounded-full transition-all duration-1000';
+                        timerElement.className = 'text-2xl font-bold text-purple-400';
+                    }
+                }
+                
+                // Add pulsing effect when time is low
+                if (remaining <= 10 && remaining > 0) {
+                    timerElement.classList.add('animate-pulse');
+                } else {
+                    timerElement.classList.remove('animate-pulse');
+                }
+                
+                if (remaining <= 0) {
+                    clearInterval(gameState.gameTimerInterval);
+                    gameState.gameTimerInterval = null;
+                    endGame();
+                }
+            }, 1000);
+        }
+        
+        function showCountdown(callback) {
+            const gameArea = document.getElementById('game-area');
+            const countdownDiv = document.createElement('div');
+            countdownDiv.className = 'absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10';
+            countdownDiv.innerHTML = '<div class="text-8xl font-bold text-white" id="countdown-number">3</div>';
+            gameArea.appendChild(countdownDiv);
+            
+            let count = 3;
+            const countdownInterval = setInterval(() => {
+                const numberEl = document.getElementById('countdown-number');
+                if (count > 1) {
+                    count--;
+                    numberEl.textContent = count;
+                    numberEl.classList.add('bounce');
+                    setTimeout(() => numberEl.classList.remove('bounce'), 600);
+                } else if (count === 1) {
+                    numberEl.textContent = 'START!';
+                    numberEl.classList.add('bounce');
+                    count--;
+                } else {
+                    clearInterval(countdownInterval);
+                    countdownDiv.remove();
+                    callback();
+                }
+            }, 1000);
+        }
+
+        function spawnRisingWord() {
+            if (!gameState.active) return;
+            
+            const words = wordLists[currentTest.language][settings.difficulty];
+            const word = words[Math.floor(Math.random() * words.length)];
+            
+            // Generate unique colors for each word
+            const colors = [
+                '#ff6b6b', '#4ecdc4', '#45b7d1', '#96ceb4', '#feca57',
+                '#ff9ff3', '#54a0ff', '#5f27cd', '#00d2d3', '#ff9f43',
+                '#10ac84', '#ee5a24', '#0abde3', '#feca57', '#48dbfb'
+            ];
+            const randomColor = colors[Math.floor(Math.random() * colors.length)];
+            
+            const wordElement = document.createElement('div');
+            wordElement.className = 'rising-word';
+            wordElement.textContent = word;
+            wordElement.style.left = Math.random() * 80 + '%';
+            wordElement.style.color = randomColor;
+            wordElement.style.background = `${randomColor}20`;
+            wordElement.style.border = `2px solid ${randomColor}60`;
+            
+            // Apply language-specific font
+            if (currentTest.language !== 'english') {
+                wordElement.classList.add(`lang-${currentTest.language}`);
+            }
+            
+            // Speed increases with score in speed challenge mode
+            const speed = gameState.gameType === 'speed' ? 
+                Math.max(2, 5 - (gameState.score / 50)) : 
+                (3 + Math.random() * 2);
+            wordElement.style.animationDuration = speed + 's';
+            
+            document.getElementById('game-area').appendChild(wordElement);
+            gameState.fallingWords.push({ element: wordElement, word: word, color: randomColor });
+            
+            // Remove word when animation ends (word reached top)
+            setTimeout(() => {
+                if (wordElement.parentNode && gameState.active) {
+                    wordElement.remove();
+                    // Find and remove from array safely
+                    const wordIndex = gameState.fallingWords.findIndex(fw => fw.element === wordElement);
+                    if (wordIndex !== -1) {
+                        gameState.fallingWords.splice(wordIndex, 1);
+                        gameState.lives--;
+                        gameState.wordsMissed++;
+                        updateGameStats();
+                        
+                        // Play miss sound
+                        playTypingSound('error');
+                        
+                        if (gameState.lives <= 0) {
+                            endGame();
+                            return;
+                        }
+                    }
+                }
+            }, speed * 1000);
+            
+            // Spawn next word - adaptive timing based on performance
+            const baseDelay = gameState.gameType === 'speed' ? 1200 : 1800;
+            const scoreReduction = gameState.gameType === 'speed' ? Math.min(800, gameState.score * 5) : 0;
+            const difficultyReduction = settings.difficulty === 'hard' ? 400 : settings.difficulty === 'medium' ? 200 : 0;
+            const nextWordDelay = Math.max(400, baseDelay - scoreReduction - difficultyReduction + Math.random() * 600);
+            
+            if (gameState.active) {
+                gameState.gameTimer = setTimeout(() => spawnRisingWord(), nextWordDelay);
+            }
+        }
+
+        function handleGameInput(event) {
+            if (!gameState.active) return;
+            
+            const input = event.target.value.trim();
+            
+            // Check on every keystroke for word matches
+            if ((gameState.gameType === 'falling' || gameState.gameType === 'speed') && input.length > 0) {
+                // Check if input matches any rising word exactly
+                const matchedWordIndex = gameState.fallingWords.findIndex(fw => fw.word === input);
+                
+                if (matchedWordIndex !== -1) {
+                    const matchedWord = gameState.fallingWords[matchedWordIndex];
+                    
+                    // Create explosion effect
+                    createWordExplosion(matchedWord.element, matchedWord.color);
+                    
+                    // Remove the word from DOM and array
+                    if (matchedWord.element && matchedWord.element.parentNode) {
+                        matchedWord.element.remove();
+                    }
+                    gameState.fallingWords.splice(matchedWordIndex, 1);
+                    
+                    // Track successful word
+                    gameState.wordsTyped++;
+                    
+                    // Score calculation with proper bonuses
+                    const baseScore = 10;
+                    const lengthBonus = input.length * 2;
+                    const speedBonus = gameState.gameType === 'speed' ? Math.floor(gameState.score / 100) * 5 : 0;
+                    const difficultyMultiplier = settings.difficulty === 'hard' ? 1.5 : settings.difficulty === 'medium' ? 1.2 : 1;
+                    
+                    gameState.score += Math.round((baseScore + lengthBonus + speedBonus) * difficultyMultiplier);
+                    
+                    // Clear input and update display
+                    event.target.value = '';
+                    updateGameStats();
+                    
+                    // Play success sound
+                    playTypingSound('word');
+                    
+                    // Add visual feedback
+                    event.target.classList.add('bounce');
+                    setTimeout(() => event.target.classList.remove('bounce'), 600);
+                }
+            }
+        }
+        
+        function createWordExplosion(element, color) {
+            const rect = element.getBoundingClientRect();
+            const gameArea = document.getElementById('game-area');
+            const gameRect = gameArea.getBoundingClientRect();
+            
+            // Create explosion particles
+            for (let i = 0; i < 8; i++) {
+                const particle = document.createElement('div');
+                particle.style.position = 'absolute';
+                particle.style.left = (rect.left - gameRect.left + rect.width/2) + 'px';
+                particle.style.top = (rect.top - gameRect.top + rect.height/2) + 'px';
+                particle.style.width = '4px';
+                particle.style.height = '4px';
+                particle.style.background = color;
+                particle.style.borderRadius = '50%';
+                particle.style.pointerEvents = 'none';
+                particle.style.zIndex = '1000';
+                
+                const angle = (i / 8) * Math.PI * 2;
+                const distance = 50 + Math.random() * 30;
+                const endX = Math.cos(angle) * distance;
+                const endY = Math.sin(angle) * distance;
+                
+                particle.style.transition = 'all 0.6s ease-out';
+                gameArea.appendChild(particle);
+                
+                setTimeout(() => {
+                    particle.style.transform = `translate(${endX}px, ${endY}px)`;
+                    particle.style.opacity = '0';
+                }, 10);
+                
+                setTimeout(() => particle.remove(), 600);
+            }
+        }
+
+        function updateGameStats() {
+            document.getElementById('game-score').textContent = gameState.score;
+            document.getElementById('game-lives').textContent = gameState.lives;
+            document.getElementById('words-typed-count').textContent = gameState.wordsTyped || 0;
+            
+            // Update progress bar based on words typed (assuming 50 words as target)
+            const targetWords = 50;
+            const progress = Math.min(100, (gameState.wordsTyped / targetWords) * 100);
+            const progressBar = document.getElementById('game-progress-bar');
+            if (progressBar) {
+                progressBar.style.width = progress + '%';
+                
+                // Change color based on progress
+                if (progress >= 80) {
+                    progressBar.className = 'bg-gradient-to-r from-green-400 to-emerald-500 h-3 rounded-full transition-all duration-300';
+                } else if (progress >= 50) {
+                    progressBar.className = 'bg-gradient-to-r from-yellow-400 to-orange-500 h-3 rounded-full transition-all duration-300';
+                } else {
+                    progressBar.className = 'bg-gradient-to-r from-blue-400 to-purple-500 h-3 rounded-full transition-all duration-300';
+                }
+            }
+        }
+
+        function endGame() {
+            gameState.active = false;
+            
+            // Clear game timer
+            if (gameState.gameTimer) {
+                clearTimeout(gameState.gameTimer);
+                gameState.gameTimer = null;
+            }
+            
+            // Clear game timer interval
+            if (gameState.gameTimerInterval) {
+                clearInterval(gameState.gameTimerInterval);
+                gameState.gameTimerInterval = null;
+            }
+            
+            // Clear falling words
+            gameState.fallingWords.forEach(fw => {
+                if (fw.element && fw.element.parentNode) {
+                    fw.element.remove();
+                }
+            });
+            gameState.fallingWords = [];
+            
+            // Clear game input
+            document.getElementById('game-input').value = '';
+            
+            // Reset timer display
+            const timerElement = document.getElementById('game-timer');
+            const progressBar = document.getElementById('game-timer-progress');
+            
+            timerElement.textContent = gameState.timeLimit;
+            timerElement.className = 'text-2xl font-bold text-purple-400';
+            timerElement.classList.remove('animate-pulse');
+            
+            if (progressBar) {
+                progressBar.style.width = '100%';
+                progressBar.className = 'bg-purple-400 h-2 rounded-full transition-all duration-1000';
+            }
+            
+            // Show detailed game results
+            showGameResults();
+        }
+
+        function showGameResults() {
+            const gameArea = document.getElementById('game-area');
+            const duration = gameState.startTime ? Math.floor((Date.now() - gameState.startTime) / 1000) : 0;
+            const accuracy = (gameState.wordsTyped + gameState.wordsMissed) > 0 ? 
+                Math.round((gameState.wordsTyped / (gameState.wordsTyped + gameState.wordsMissed)) * 100) : 0;
+            
+            const resultsHTML = `
+                <div class="absolute inset-0 flex items-center justify-center bg-black/80 backdrop-blur-sm z-50">
+                    <div class="glass rounded-xl p-8 max-w-md w-full mx-4 text-center">
+                        <div class="text-3xl font-bold mb-6 bg-gradient-to-r from-yellow-400 to-orange-500 bg-clip-text text-transparent">
+                            🎮 Game Complete!
+                        </div>
+                        
+                        <div class="space-y-4 mb-6">
+                            <div class="flex justify-between items-center p-3 bg-white/10 rounded-lg">
+                                <span class="text-gray-300">Final Score:</span>
+                                <span class="text-2xl font-bold text-blue-400">${gameState.score}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-white/10 rounded-lg">
+                                <span class="text-gray-300">Words Typed:</span>
+                                <span class="text-xl font-bold text-green-400">${gameState.wordsTyped || 0}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-white/10 rounded-lg">
+                                <span class="text-gray-300">Words Missed:</span>
+                                <span class="text-xl font-bold text-red-400">${gameState.wordsMissed || 0}</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-white/10 rounded-lg">
+                                <span class="text-gray-300">Accuracy:</span>
+                                <span class="text-xl font-bold text-purple-400">${accuracy}%</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-white/10 rounded-lg">
+                                <span class="text-gray-300">Duration:</span>
+                                <span class="text-lg font-semibold text-yellow-400">${duration}s</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center p-3 bg-white/10 rounded-lg">
+                                <span class="text-gray-300">Game Type:</span>
+                                <span class="text-lg font-semibold text-pink-400 capitalize">${gameState.gameType}</span>
+                            </div>
+                        </div>
+                        
+                        <div class="flex space-x-3">
+                            <button onclick="restartGame()" class="flex-1 px-4 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all">
+                                <i class="fas fa-redo mr-2"></i>Play Again
+                            </button>
+                            <button onclick="closeGameResults()" class="flex-1 px-4 py-3 bg-gray-600 text-white rounded-lg font-semibold hover:bg-gray-700 transition-all">
+                                <i class="fas fa-times mr-2"></i>Close
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            gameArea.insertAdjacentHTML('beforeend', resultsHTML);
+        }
+
+        function restartGame() {
+            closeGameResults();
+            if (gameState.gameType === 'falling') {
+                startFallingWords();
+            } else if (gameState.gameType === 'speed') {
+                startSpeedChallenge();
+            }
+        }
+
+        function closeGameResults() {
+            const resultsModal = document.querySelector('.absolute.inset-0.flex.items-center.justify-center');
+            if (resultsModal) {
+                resultsModal.remove();
+            }
+            document.getElementById('game-area').classList.add('hidden');
+        }
+
+        // Leaderboard
+        function showLeaderboard(period, element = null) {
+            // Update tab styles
+            document.querySelectorAll('.leaderboard-tab').forEach(tab => {
+                tab.classList.remove('bg-blue-500', 'text-white');
+                tab.classList.add('hover:bg-white/10');
+            });
+            
+            // Highlight clicked tab
+            const targetTab = element || document.querySelector(`[onclick="showLeaderboard('${period}')"]`);
+            if (targetTab) {
+                targetTab.classList.add('bg-blue-500', 'text-white');
+                targetTab.classList.remove('hover:bg-white/10');
+            }
+            
+            // Generate leaderboard content
+            const content = document.getElementById('leaderboard-content');
+            const leaderboardData = {
+                daily: [
+                    { name: 'SpeedTyper', wpm: 95, accuracy: 98, score: 2850, language: 'English' },
+                    { name: 'KeyboardNinja', wpm: 87, accuracy: 96, score: 2610, language: 'Hindi' },
+                    { name: 'TypeMaster', wpm: 82, accuracy: 99, score: 2460, language: 'English' },
+                    { name: 'QuickFingers', wpm: 78, accuracy: 94, score: 2340, language: 'Tamil' },
+                    { name: 'WordRacer', wpm: 75, accuracy: 97, score: 2250, language: 'Telugu' }
+                ],
+                weekly: [
+                    { name: 'TypeGod', wpm: 102, accuracy: 97, score: 3060, language: 'English' },
+                    { name: 'SpeedDemon', wpm: 98, accuracy: 95, score: 2940, language: 'Bengali' },
+                    { name: 'KeyMaster', wpm: 91, accuracy: 98, score: 2730, language: 'Gujarati' },
+                    { name: 'FastTyper', wpm: 86, accuracy: 96, score: 2580, language: 'Punjabi' },
+                    { name: 'QuickType', wpm: 83, accuracy: 94, score: 2490, language: 'Hindi' }
+                ],
+                alltime: [
+                    { name: 'LegendTyper', wpm: 120, accuracy: 99, score: 3600, language: 'English' },
+                    { name: 'UltimateSpeed', wpm: 115, accuracy: 98, score: 3450, language: 'Hindi' },
+                    { name: 'TypeChampion', wpm: 108, accuracy: 97, score: 3240, language: 'Tamil' },
+                    { name: 'SpeedKing', wpm: 105, accuracy: 96, score: 3150, language: 'Telugu' },
+                    { name: 'KeyboardLord', wpm: 98, accuracy: 99, score: 2940, language: 'Bengali' }
+                ]
+            };
+            
+            const entries = leaderboardData[period];
+            
+            content.innerHTML = entries.map((entry, index) => `
+                <div class="flex items-center justify-between p-4 bg-white/5 rounded-lg mb-3 hover:bg-white/10 transition-all">
+                    <div class="flex items-center space-x-4">
+                        <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm ${
+                            index === 0 ? 'bg-yellow-500 text-black' :
+                            index === 1 ? 'bg-gray-400 text-black' :
+                            index === 2 ? 'bg-orange-600 text-white' :
+                            'bg-white/20'
+                        }">
+                            ${index === 0 ? '🥇' : index === 1 ? '🥈' : index === 2 ? '🥉' : index + 1}
+                        </div>
+                        <div>
+                            <div class="font-semibold text-lg">${entry.name}</div>
+                            <div class="text-sm text-gray-400">${entry.accuracy}% accuracy • ${entry.language}</div>
+                            <div class="text-xs text-purple-400">Score: ${entry.score}</div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-blue-400">${entry.wpm}</div>
+                        <div class="text-sm text-gray-400">WPM</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Ghost Mode
+        function startGhostRace() {
+            // Simulate AI typing
+            const ghostWPM = 60 + Math.random() * 40; // 60-100 WPM
+            const ghostInterval = 60000 / (ghostWPM * 5); // milliseconds per character
+            
+            let ghostProgress = 0;
+            const ghostTimer = setInterval(() => {
+                if (!currentTest.isActive) {
+                    clearInterval(ghostTimer);
+                    return;
+                }
+                
+                ghostProgress++;
+                // Visual indication of ghost progress could be added here
+                
+                if (ghostProgress >= currentTest.words.join(' ').length) {
+                    clearInterval(ghostTimer);
+                    alert('Ghost finished first! Try to beat it next time!');
+                }
+            }, ghostInterval);
+        }
+
+        // Results
+        function showResults() {
+            const timeElapsed = (Date.now() - currentTest.startTime) / 1000 / 60;
+            const wpm = Math.round((currentTest.correctChars / 5) / timeElapsed);
+            const accuracy = currentTest.totalChars > 0 ? Math.round((currentTest.correctChars / currentTest.totalChars) * 100) : 100;
+            const wordsCompleted = currentTest.currentWordIndex;
+            const totalWords = currentTest.words.length;
+            const duration = Math.round(timeElapsed * 60);
+            
+            // Save result to practice history
+            savePracticeResult(wpm, accuracy, currentTest.errors, languageNames[currentTest.language], duration);
+            
+            const resultHTML = `
+                <div class="text-center p-8 bg-gradient-to-br from-white/10 to-white/5 rounded-xl border border-white/20">
+                    <div class="text-4xl font-bold mb-6 bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+                        🎉 Test Complete!
+                    </div>
+                    
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+                        <div class="p-4 bg-white/10 rounded-lg">
+                            <div class="text-3xl font-bold text-blue-400">${wpm}</div>
+                            <div class="text-sm text-gray-400">Words Per Minute</div>
+                        </div>
+                        <div class="p-4 bg-white/10 rounded-lg">
+                            <div class="text-3xl font-bold text-green-400">${accuracy}%</div>
+                            <div class="text-sm text-gray-400">Accuracy</div>
+                        </div>
+                        <div class="p-4 bg-white/10 rounded-lg">
+                            <div class="text-3xl font-bold text-purple-400">${wordsCompleted}</div>
+                            <div class="text-sm text-gray-400">Words Completed</div>
+                        </div>
+                        <div class="p-4 bg-white/10 rounded-lg">
+                            <div class="text-3xl font-bold text-red-400">${currentTest.errors}</div>
+                            <div class="text-sm text-gray-400">Errors</div>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4 mb-6 text-left">
+                        <div class="p-3 bg-white/5 rounded-lg">
+                            <div class="text-sm text-gray-400">Correct Characters:</div>
+                            <div class="text-xl font-bold text-green-400">${currentTest.correctChars}</div>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg">
+                            <div class="text-sm text-gray-400">Total Characters:</div>
+                            <div class="text-xl font-bold text-blue-400">${currentTest.totalChars}</div>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg">
+                            <div class="text-sm text-gray-400">Test Duration:</div>
+                            <div class="text-xl font-bold text-purple-400">${Math.round(timeElapsed * 60)}s</div>
+                        </div>
+                        <div class="p-3 bg-white/5 rounded-lg">
+                            <div class="text-sm text-gray-400">Language:</div>
+                            <div class="text-xl font-bold text-yellow-400">${languageNames[currentTest.language]}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-4 justify-center">
+                        <button onclick="resetTest()" class="px-8 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-lg font-semibold hover:from-blue-600 hover:to-purple-700 transition-all glow">
+                            <i class="fas fa-redo mr-2"></i>Try Again
+                        </button>
+                        <button onclick="generateText(); resetTest()" class="px-8 py-3 bg-gradient-to-r from-green-500 to-teal-600 text-white rounded-lg font-semibold hover:from-green-600 hover:to-teal-700 transition-all">
+                            <i class="fas fa-refresh mr-2"></i>New Text
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('text-display').innerHTML = resultHTML;
+        }
+
+        // Audio System
+        let audioContext = null;
+        
+        function initAudioContext() {
+            if (!audioContext) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                    // Resume context if it's suspended (required by some browsers)
+                    if (audioContext.state === 'suspended') {
+                        audioContext.resume();
+                    }
+                } catch (error) {
+                    console.log('Audio context not supported:', error);
+                    return null;
+                }
+            }
+            return audioContext;
+        }
+
+        function playTypingSound(type = 'letter', isCorrect = true) {
+            if (!settings.soundEnabled) return;
+            
+            try {
+                const ctx = initAudioContext();
+                const oscillator = ctx.createOscillator();
+                const gainNode = ctx.createGain();
+                const filterNode = ctx.createBiquadFilter();
+                
+                oscillator.connect(filterNode);
+                filterNode.connect(gainNode);
+                gainNode.connect(ctx.destination);
+                
+                // Different sounds for different actions
+                switch(type) {
+                    case 'letter':
+                        if (isCorrect) {
+                            // Correct letter - pleasant click
+                            oscillator.frequency.value = 800 + Math.random() * 200;
+                            oscillator.type = 'sine';
+                            filterNode.frequency.value = 2000;
+                            filterNode.Q.value = 1;
+                        } else {
+                            // Wrong letter - lower, duller sound
+                            oscillator.frequency.value = 300 + Math.random() * 100;
+                            oscillator.type = 'sawtooth';
+                            filterNode.frequency.value = 800;
+                            filterNode.Q.value = 0.5;
+                        }
+                        const volume = 0.1 * getVolumeMultiplier();
+                        gainNode.gain.setValueAtTime(volume, ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.1);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.1);
+                        break;
+                        
+                    case 'word':
+                        // Word completion - musical chord
+                        playChord(ctx, [523.25, 659.25, 783.99], 0.3); // C-E-G chord
+                        break;
+                        
+                    case 'error':
+                        // Error sound - discordant
+                        oscillator.frequency.value = 200;
+                        oscillator.type = 'sawtooth';
+                        filterNode.frequency.value = 400;
+                        filterNode.Q.value = 5;
+                        gainNode.gain.setValueAtTime(0.15 * getVolumeMultiplier(), ctx.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.2);
+                        oscillator.start(ctx.currentTime);
+                        oscillator.stop(ctx.currentTime + 0.2);
+                        break;
+                        
+                    case 'complete':
+                        // Test completion - victory fanfare
+                        playVictoryFanfare(ctx);
+                        break;
+                        
+                    case 'space':
+                        // Space bar - soft whoosh
+                        const noise = ctx.createBufferSource();
+                        const buffer = ctx.createBuffer(1, ctx.sampleRate * 0.1, ctx.sampleRate);
+                        const data = buffer.getChannelData(0);
+                        for (let i = 0; i < data.length; i++) {
+                            data[i] = (Math.random() * 2 - 1) * 0.1;
+                        }
+                        noise.buffer = buffer;
+                        
+                        const noiseGain = ctx.createGain();
+                        const noiseFilter = ctx.createBiquadFilter();
+                        noiseFilter.type = 'highpass';
+                        noiseFilter.frequency.value = 1000;
+                        
+                        noise.connect(noiseFilter);
+                        noiseFilter.connect(noiseGain);
+                        noiseGain.connect(ctx.destination);
+                        
+                        noiseGain.gain.setValueAtTime(0.05 * getVolumeMultiplier(), ctx.currentTime);
+                        noiseGain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                        
+                        noise.start(ctx.currentTime);
+                        noise.stop(ctx.currentTime + 0.1);
+                        break;
+                }
+            } catch (error) {
+                console.log('Audio context error:', error);
+            }
+        }
+        
+        function playChord(ctx, frequencies, duration) {
+            frequencies.forEach((freq, index) => {
+                setTimeout(() => {
+                    try {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.frequency.value = freq;
+                        osc.type = 'sine';
+                        
+                        const volume = 0.08 * getVolumeMultiplier();
+                        gain.gain.setValueAtTime(volume, ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + duration);
+                        
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + duration);
+                    } catch (error) {
+                        console.log('Chord audio error:', error);
+                    }
+                }, index * 50);
+            });
+        }
+        
+        function playVictoryFanfare(ctx) {
+            const melody = [523.25, 659.25, 783.99, 1046.50]; // C-E-G-C
+            melody.forEach((freq, index) => {
+                setTimeout(() => {
+                    try {
+                        const osc = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        
+                        osc.connect(gain);
+                        gain.connect(ctx.destination);
+                        
+                        osc.frequency.value = freq;
+                        osc.type = 'triangle';
+                        
+                        gain.gain.setValueAtTime(0.1 * getVolumeMultiplier(), ctx.currentTime);
+                        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
+                        
+                        osc.start(ctx.currentTime);
+                        osc.stop(ctx.currentTime + 0.4);
+                    } catch (error) {
+                        console.log('Victory fanfare error:', error);
+                    }
+                }, index * 200);
+            });
+        }
+        
+        function playBackgroundBeat() {
+            if (!settings.soundEnabled || !currentTest.isActive) return;
+            
+            try {
+                const ctx = initAudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.frequency.value = 60; // Low bass beat
+                osc.type = 'sine';
+                
+                gain.gain.setValueAtTime(0.05 * getVolumeMultiplier(), ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+                
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.1);
+            } catch (error) {
+                console.log('Background beat error:', error);
+            }
+        }
+        
+        function startRhythmicBeats() {
+            if (window.rhythmTimer) clearInterval(window.rhythmTimer);
+            
+            let beatCount = 0;
+            window.rhythmTimer = setInterval(() => {
+                if (!currentTest.isActive || !settings.soundEnabled) {
+                    clearInterval(window.rhythmTimer);
+                    window.rhythmTimer = null;
+                    return;
+                }
+                
+                try {
+                    const ctx = initAudioContext();
+                    
+                    // Create different beat patterns
+                    if (beatCount % 4 === 0) {
+                        // Strong beat every 4th beat
+                        playRhythmBeat(ctx, 80, 0.08, 'sine');
+                    } else if (beatCount % 2 === 0) {
+                        // Medium beat every 2nd beat
+                        playRhythmBeat(ctx, 120, 0.04, 'triangle');
+                    } else {
+                        // Light beat on off-beats
+                        playRhythmBeat(ctx, 200, 0.02, 'sine');
+                    }
+                    
+                    beatCount++;
+                } catch (error) {
+                    console.log('Rhythmic beat error:', error);
+                }
+            }, 600); // Beat every 600ms (100 BPM)
+        }
+        
+        function playRhythmBeat(ctx, frequency, volume, type) {
+            try {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                const filter = ctx.createBiquadFilter();
+                
+                osc.connect(filter);
+                filter.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.frequency.value = frequency;
+                osc.type = type;
+                filter.type = 'lowpass';
+                filter.frequency.value = 400;
+                
+                const adjustedVolume = volume * getVolumeMultiplier();
+                gain.gain.setValueAtTime(adjustedVolume, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.15);
+                
+                osc.start(ctx.currentTime);
+                osc.stop(ctx.currentTime + 0.15);
+            } catch (error) {
+                console.log('Rhythm beat error:', error);
+            }
+        }
+
+        function saveSettings() {
+            localStorage.setItem('typeRushSettings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            try {
+                const saved = localStorage.getItem('typeRushSettings');
+                if (saved) {
+                    settings = { ...settings, ...JSON.parse(saved) };
+                    setTheme(settings.theme);
+                    setFontSize(settings.fontSize);
+                    document.getElementById('sound-toggle').checked = settings.soundEnabled;
+                    document.getElementById('timer-toggle').checked = settings.timerEnabled;
+                    setDifficulty(settings.difficulty);
+                }
+            } catch (error) {
+                console.log('Settings load error:', error);
+            }
+        }
+
+        // Practice History Functions
+        function savePracticeResult(wpm, accuracy, errors, language, duration) {
+            const result = {
+                wpm: wpm,
+                accuracy: accuracy,
+                errors: errors,
+                language: language,
+                duration: duration,
+                date: new Date().toISOString(),
+                timestamp: Date.now()
+            };
+            
+            practiceHistory.unshift(result); // Add to beginning
+            
+            // Keep only last 10 results
+            if (practiceHistory.length > 10) {
+                practiceHistory = practiceHistory.slice(0, 10);
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('typeRushHistory', JSON.stringify(practiceHistory));
+            
+            // Update history display if on history page
+            if (!document.getElementById('history-section').classList.contains('hidden')) {
+                displayPracticeHistory();
+            }
+        }
+
+        function loadPracticeHistory() {
+            try {
+                const saved = localStorage.getItem('typeRushHistory');
+                if (saved) {
+                    practiceHistory = JSON.parse(saved);
+                }
+            } catch (error) {
+                console.log('History load error:', error);
+                practiceHistory = [];
+            }
+        }
+
+        function displayPracticeHistory() {
+            const historyList = document.getElementById('practice-history-list');
+            
+            if (practiceHistory.length === 0) {
+                historyList.innerHTML = `
+                    <div class="text-center py-8 text-gray-400">
+                        <i class="fas fa-history text-4xl mb-4 opacity-50"></i>
+                        <p>No practice history yet!</p>
+                        <p class="text-sm">Complete some typing tests to see your progress here.</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            historyList.innerHTML = practiceHistory.map((result, index) => {
+                const date = new Date(result.date);
+                const timeAgo = getTimeAgo(date);
+                
+                return `
+                    <div class="p-4 bg-white/5 rounded-lg hover:bg-white/10 transition-all">
+                        <div class="flex justify-between items-start mb-2">
+                            <div class="flex items-center space-x-2">
+                                <span class="text-sm font-medium text-gray-300">#${index + 1}</span>
+                                <span class="text-xs px-2 py-1 bg-purple-500/20 text-purple-300 rounded">${result.language}</span>
+                            </div>
+                            <span class="text-xs text-gray-400">${timeAgo}</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-3 gap-4 text-center">
+                            <div>
+                                <div class="text-lg font-bold text-blue-400">${result.wpm}</div>
+                                <div class="text-xs text-gray-400">WPM</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-bold text-green-400">${result.accuracy}%</div>
+                                <div class="text-xs text-gray-400">Accuracy</div>
+                            </div>
+                            <div>
+                                <div class="text-lg font-bold text-red-400">${result.errors}</div>
+                                <div class="text-xs text-gray-400">Errors</div>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-2 text-xs text-gray-400 text-center">
+                            Duration: ${result.duration}s
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            updateProgressOverview();
+        }
+
+        function updateProgressOverview() {
+            if (practiceHistory.length === 0) {
+                document.getElementById('avg-wpm').textContent = '--';
+                document.getElementById('avg-accuracy').textContent = '--';
+                document.getElementById('best-wpm').textContent = '--';
+                document.getElementById('best-accuracy').textContent = '--';
+                document.getElementById('total-tests').textContent = '0';
+                document.getElementById('improvement-trend').textContent = '--';
+                return;
+            }
+            
+            // Calculate averages
+            const avgWpm = Math.round(practiceHistory.reduce((sum, result) => sum + result.wpm, 0) / practiceHistory.length);
+            const avgAccuracy = Math.round(practiceHistory.reduce((sum, result) => sum + result.accuracy, 0) / practiceHistory.length);
+            
+            // Find bests
+            const bestWpm = Math.max(...practiceHistory.map(r => r.wpm));
+            const bestAccuracy = Math.max(...practiceHistory.map(r => r.accuracy));
+            
+            // Calculate improvement trend
+            let trend = '--';
+            if (practiceHistory.length >= 3) {
+                const recent = practiceHistory.slice(0, 3);
+                const older = practiceHistory.slice(-3);
+                const recentAvg = recent.reduce((sum, r) => sum + r.wpm, 0) / recent.length;
+                const olderAvg = older.reduce((sum, r) => sum + r.wpm, 0) / older.length;
+                
+                if (recentAvg > olderAvg + 2) {
+                    trend = '<span class="text-green-400">📈 Improving</span>';
+                } else if (recentAvg < olderAvg - 2) {
+                    trend = '<span class="text-red-400">📉 Declining</span>';
+                } else {
+                    trend = '<span class="text-yellow-400">📊 Stable</span>';
+                }
+            }
+            
+            // Update display
+            document.getElementById('avg-wpm').textContent = avgWpm;
+            document.getElementById('avg-accuracy').textContent = avgAccuracy + '%';
+            document.getElementById('best-wpm').textContent = bestWpm;
+            document.getElementById('best-accuracy').textContent = bestAccuracy + '%';
+            document.getElementById('total-tests').textContent = practiceHistory.length;
+            document.getElementById('improvement-trend').innerHTML = trend;
+            
+            // Update progress bars
+            document.getElementById('avg-wpm-bar').style.width = Math.min(100, (avgWpm / 100) * 100) + '%';
+            document.getElementById('avg-accuracy-bar').style.width = avgAccuracy + '%';
+        }
+
+        function getTimeAgo(date) {
+            const now = new Date();
+            const diffMs = now - date;
+            const diffMins = Math.floor(diffMs / 60000);
+            const diffHours = Math.floor(diffMs / 3600000);
+            const diffDays = Math.floor(diffMs / 86400000);
+            
+            if (diffMins < 1) return 'Just now';
+            if (diffMins < 60) return `${diffMins}m ago`;
+            if (diffHours < 24) return `${diffHours}h ago`;
+            if (diffDays < 7) return `${diffDays}d ago`;
+            return date.toLocaleDateString();
+        }
+
+        function clearHistory() {
+            if (confirm('Are you sure you want to clear all practice history? This cannot be undone.')) {
+                practiceHistory = [];
+                localStorage.removeItem('typeRushHistory');
+                displayPracticeHistory();
+            }
+        }
+    </script>
+<script>(function(){function c(){var b=a.contentDocument||a.contentWindow.document;if(b){var d=b.createElement('script');d.innerHTML="window.__CF$cv$params={r:'978b75ad718b5965',t:'MTc1Njc5OTg3OS4wMDAwMDA='};var a=document.createElement('script');a.nonce='';a.src='/cdn-cgi/challenge-platform/scripts/jsd/main.js';document.getElementsByTagName('head')[0].appendChild(a);";b.getElementsByTagName('head')[0].appendChild(d)}}if(document.body){var a=document.createElement('iframe');a.height=1;a.width=1;a.style.position='absolute';a.style.top=0;a.style.left=0;a.style.border='none';a.style.visibility='hidden';document.body.appendChild(a);if('loading'!==document.readyState)c();else if(window.addEventListener)document.addEventListener('DOMContentLoaded',c);else{var e=document.onreadystatechange||function(){};document.onreadystatechange=function(b){e(b);'loading'!==document.readyState&&(document.onreadystatechange=e,c())}}}})();</script></body>
+</html>
